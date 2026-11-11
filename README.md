@@ -11,12 +11,14 @@ An ad-free "jazz café" scene for the classroom projector. You're inside a moder
 - Settings save in your browser.
 
 ## Use it
-Open the GitHub Pages link in Chrome on the classroom computer, press **F** for full screen, and press **S** for settings.
+Open the GitHub Pages link in Chrome on the classroom computer and click **Open the café**.
+
+**Teacher controls:** click **Teacher controls** and drag that window to your own screen. The café stays full screen on the projector. Use *Extend* display (Windows: `Win + P`), not *Duplicate*, so students don't see the controls. Everything you change there updates the projector live: timers, view, weather, music, and the card.
 
 Shortcuts: `Space` start/pause · `F` full screen · `S` settings · `→` next view · `N` next timer
 
 ## Turn on the website (one time)
-Repo **Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: `main` / `(root)` → Save**.
+Repo **Settings → Pages → Build and deployment → Source: GitHub Actions**. This takes effect immediately, with no Save button. Every push publishes the site automatically.
 After a minute it's live at `https://tregodan.github.io/classroomcoffeeshop/`.
 
 ## Spotify notes

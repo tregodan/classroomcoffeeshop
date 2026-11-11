@@ -150,6 +150,23 @@ body.idle{cursor:none}
 kbd{font:600 12px var(--font);padding:2px 6px;border-radius:5px;border:1px solid rgba(246,241,233,.3)}
 #scrim{position:fixed;inset:0;z-index:19;display:none}
 #drawer.open + #scrim{display:block}
+/* teacher controller mode */
+body.control #sceneWrap,body.control #card,body.control #music,body.control #bar2,body.control #brand,body.control #gate{display:none!important}
+body.control{overflow:auto;background:#1C1612;cursor:auto!important}
+body.control #ui{position:static}
+body.control #drawer{position:static;transform:none;width:100%;max-width:680px;margin:0 auto;height:auto;border:0;overflow:visible}
+body.control #closeDrawer,body.control #scrim,body.control .projOnly{display:none!important}
+#remote{display:none} body.control #remote{display:block}
+.remoteCard{padding:20px;border-radius:16px;background:#2A211A;display:flex;flex-direction:column;gap:12px;margin-top:12px}
+#rTitle{font-family:var(--serif);font-style:italic;font-weight:400;font-size:36px;margin:0;line-height:1.05}
+#rTime{font-size:60px;font-weight:700;color:var(--amber);font-variant-numeric:tabular-nums;line-height:1}
+.rRow{display:flex;gap:8px;flex-wrap:wrap}
+.rRow .btn{height:54px;font-size:16px;flex:1 1 120px}
+#rConn{margin:8px 0 0;font-size:14px;color:#e8a07a} #rConn.ok{color:#a6d9a6}
+#gate{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;gap:14px;align-items:center;justify-content:center;background:rgba(10,8,6,.45)}
+#gate.gone{display:none}
+#gate button{height:64px;padding:0 34px;font-size:20px}
+#gate p{margin:0;color:var(--ink);font-size:15px;text-shadow:0 1px 6px rgba(0,0,0,.6)}
 @media (max-width:1100px){#bar2{max-width:calc(100vw - 56px);bottom:120px}} @media (max-width:900px){#card.pos-right,#card.pos-left{width:calc(100vw - 56px)} #spotWrap{width:300px}}
 </style>
 </head>
@@ -303,14 +320,30 @@ kbd{font:600 12px var(--font);padding:2px 6px;border-radius:5px;border:1px solid
     <button class="pill" id="todBtn" title="Time of day">Time: <span id="todName"></span></button>
     <button class="pill" id="wxBtn" title="Weather outside">Outside: <span id="wxName"></span></button>
     <span class="sep"></span>
+    <button class="pill" id="ctlBtn" title="Open teacher controls in a new window">Teacher controls</button>
     <button class="iconBtn" id="fsBtn" aria-label="Full screen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
     <button class="iconBtn" id="setBtn" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
   </div>
   <div id="toast" class="glass"></div>
 </div>
+<div id="gate"><button class="pill primary" id="gateBtn">Open the café</button><p>One click lets the bell, music and full screen work.</p></div>
 
 <aside id="drawer" aria-label="Settings">
-  <div class="drawerHead"><h2>Set up the café</h2><button class="iconBtn" id="closeDrawer" aria-label="Close settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="drawerHead"><h2 id="drawerTitle">Set up the café</h2><button class="iconBtn" id="closeDrawer" aria-label="Close settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+
+  <div class="projOnly row"><button class="btn primary" id="ctlBtn2">Open teacher controls in a new window</button></div>
+  <p class="hint projOnly">Drag that window to your own screen and keep this café full screen on the projector. (Use “Extend” display, not “Duplicate”, so students don’t see it.)</p>
+  <div id="remote">
+    <p id="rConn">Looking for the café screen…</p>
+    <div class="remoteCard">
+      <span class="hint" style="margin:0" id="rLabel">On the projector now</span>
+      <h1 id="rTitle">—</h1>
+      <div style="display:flex;align-items:baseline;gap:12px"><span id="rTime">--:--</span><span id="rNote" class="hint" style="margin:0"></span></div>
+      <div class="rRow"><button class="btn primary" id="rStart">Start</button><button class="btn" id="rPlus">+1 min</button><button class="btn" id="rReset">Reset</button><button class="btn" id="rNext">Next timer</button></div>
+      <div class="rRow"><button class="btn" id="rCard">Hide card</button><button class="btn" id="rMusic">Play / pause music</button><button class="btn" id="rOpen">Open café screen</button></div>
+      <p class="hint" id="rMusicNote" style="margin:0"></p>
+    </div>
+  </div>
 
   <h3>Out the window</h3>
   <div class="grid" id="viewGrid"></div>
@@ -418,7 +451,11 @@ const S = Object.assign({
   classLabel:'', timers:DEFAULT_TIMERS, activeTimer:'t3', src:'spotify', spotUrl:'', shuffle:false, vol:0.7
 }, saved);
 if(!Array.isArray(S.timers) || !S.timers.length) S.timers = DEFAULT_TIMERS.slice();
-const save = () => store.set(S);
+const CONTROL = new URLSearchParams(location.search).has('control');
+if(CONTROL) document.body.classList.add('control');
+const bc = ('BroadcastChannel' in window) ? new BroadcastChannel('cornerCafe') : null;
+const send = m => { try{ bc && bc.postMessage(m); }catch(e){} };
+const save = () => { store.set(S); send({type:'state', S}); };
 
 /* ---------- scene scaling (cover) ---------- */
 const scene = $('#scene');
@@ -516,6 +553,7 @@ let parts = [], drops = [], raf = 0;
 const rnd = (a,b) => a + Math.random()*(b-a);
 function wxSetup(){
   parts = []; drops = [];
+  if(CONTROL) return;
   if(S.wx==='rain'){
     for(let i=0;i<170;i++) parts.push({x:rnd(0,W),y:rnd(0,H),l:rnd(18,40),v:rnd(18,30)});
     for(let i=0;i<70;i++) drops.push({x:rnd(0,W),y:rnd(0,H),r:rnd(2,6),v:Math.random()<.25?rnd(.3,1.4):0});
@@ -558,6 +596,7 @@ function tick(){
 let AC = null, rainNode = null;
 function audioCtx(){ if(!AC){ try{ AC = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC && AC.state==='suspended') AC.resume(); return AC; }
 function rainAudio(){
+  if(CONTROL) return;
   const want = S.rainSound && S.wx==='rain';
   if(want && !rainNode){
     const ac = audioCtx(); if(!ac) return;
@@ -711,7 +750,7 @@ function renderMusic(){
   $('#spotWrap').style.display = S.src==='spotify' ? '' : 'none';
   $('#localPill').style.display = S.src==='files' ? 'flex' : 'none';
   $('#hideMusic').style.display = S.src==='none' ? 'none' : '';
-  if(S.src==='spotify'){ loadSpotifyApi(); if(!spotCtl && (spotReady || !document.getElementById('spotApi'))) mountSpotify(); }
+  if(S.src==='spotify' && !CONTROL){ loadSpotifyApi(); if(!spotCtl && (spotReady || !document.getElementById('spotApi'))) mountSpotify(); }
 }
 $('#spotUrl').value = S.spotUrl;
 $('#spotLoad').onclick = () => {
@@ -722,17 +761,21 @@ $('#hideMusic').onclick = () => $('#music').classList.toggle('collapsed');
 
 function renderTracks(){
   const ul = $('#trackList'); ul.innerHTML='';
-  tracks.forEach((t,i)=>{ const li=document.createElement('li'); li.className = i===tIdx?'now':''; li.innerHTML='<span></span>'; li.firstChild.textContent=t.name; li.onclick=()=>playTrack(i); ul.appendChild(li); });
+  tracks.forEach((t,i)=>{ const li=document.createElement('li'); li.className = i===tIdx?'now':''; li.innerHTML='<span></span>'; li.firstChild.textContent=t.name; li.onclick=()=> CONTROL ? send({type:'cmd',cmd:'mtrack',arg:i}) : playTrack(i); ul.appendChild(li); });
   const t = tracks[tIdx];
   $('#trackName').textContent = t ? t.name : 'No song yet';
   $('#trackMeta').textContent = tracks.length ? `Your music · ${tIdx+1} of ${tracks.length}` : 'Add songs in settings';
 }
 $('#audioFiles').onchange = e => {
   const fs = [...e.target.files].filter(f=>/^audio\//.test(f.type) || /\.(mp3|m4a|wav|ogg|aac|flac)$/i.test(f.name));
-  fs.forEach(f=>tracks.push({name:f.name.replace(/\.[^.]+$/,''), url:URL.createObjectURL(f)}));
-  if(fs.length && audio.paused && !audio.src) { tIdx = 0; audio.src = tracks[0].url; }
-  renderTracks(); e.target.value='';
+  if(CONTROL){ send({type:'tracks', files:fs}); e.target.value=''; toast('Sent '+fs.length+' song(s) to the café screen'); return; }
+  addFiles(fs); e.target.value='';
 };
+function addFiles(fs){
+  fs.forEach(f=>tracks.push({name:(f.name||'Song').replace(/\.[^.]+$/,''), url:URL.createObjectURL(f)}));
+  if(fs.length && audio.paused && !audio.src) { tIdx = 0; audio.src = tracks[0].url; }
+  renderTracks();
+}
 function playTrack(i){
   if(!tracks.length) return;
   tIdx = (i+tracks.length)%tracks.length; clearInterval(fadeT);
@@ -780,7 +823,7 @@ function renderViewGrid(){
 }
 $('#shufflePhoto').onclick = () => { if(S.view==='custom') return; S.photoIdx = (S.photoIdx+1)%currentView().photos.length; save(); loadPhoto(); };
 $('#useUrl').onclick = () => { const u = $('#customUrl').value.trim(); if(!/^https?:\/\//.test(u)) return toast('Paste a link that starts with https://'); S.customUrl=u; customObjUrl=''; S.view='custom'; save(); loadPhoto(); };
-$('#customFile').onchange = e => { const f = e.target.files[0]; if(!f) return; customObjUrl = URL.createObjectURL(f); S.view='custom'; save(); loadPhoto(); toast('Using your photo (pick it again next time)'); };
+$('#customFile').onchange = e => { const f = e.target.files[0]; if(!f) return; if(CONTROL){ send({type:'photo', file:f}); S.view='custom'; save(); toast('Sent your photo to the café screen'); return; } customObjUrl = URL.createObjectURL(f); S.view='custom'; save(); loadPhoto(); toast('Using your photo (pick it again next time)'); };
 $('#customUrl').value = S.customUrl;
 $('#nextView').onclick = () => { const i = VIEWS.findIndex(v=>v.key===S.view); S.view = VIEWS[(i+1)%VIEWS.length].key; S.photoIdx=0; save(); loadPhoto(); };
 $('#todBtn').onclick = () => { const i = TODS.findIndex(x=>x.k===S.tod); S.tod = TODS[(i+1)%TODS.length].k; save(); applyLook(); toast('Time of day: '+(TODS.find(x=>x.k===S.tod).n)); };
@@ -810,21 +853,106 @@ let toastT=0; function toast(m){ const t=$('#toast'); t.textContent=m; t.classLi
 function clock(){ $('#clock').textContent = new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}); }
 setInterval(clock, 10000); clock();
 let idleT = 0;
-function wake(){ document.body.classList.remove('idle'); clearTimeout(idleT); idleT = setTimeout(()=>{ if(S.idle && !drawer.classList.contains('open')) document.body.classList.add('idle'); }, 3500); }
+function wake(){ if(CONTROL) return; document.body.classList.remove('idle'); clearTimeout(idleT); idleT = setTimeout(()=>{ if(S.idle && !drawer.classList.contains('open')) document.body.classList.add('idle'); }, 3500); }
 ['mousemove','mousedown','keydown','touchstart'].forEach(e=>addEventListener(e, wake, {passive:true})); wake();
 
 addEventListener('keydown', e => {
   if(e.target.closest('input,textarea,select,[contenteditable]')) return;
+  if(CONTROL){ if(e.key===' '){ e.preventDefault(); send({type:'cmd',cmd:'toggle'}); } else if(e.key==='n'||e.key==='N') send({type:'cmd',cmd:'next'}); else if(e.key==='ArrowRight') $('#nextView').click(); return; }
   if(e.key===' '){ e.preventDefault(); audioCtx(); running?stopTimer():startTimer(); }
   else if(e.key==='f'||e.key==='F') $('#fsBtn').click();
   else if(e.key==='s'||e.key==='S') $('#setBtn').click();
   else if(e.key==='Escape') closeDrawer();
   else if(e.key==='ArrowRight') $('#nextView').click();
-  else if(e.key==='n'||e.key==='N'){ const i=S.timers.findIndex(t=>t.id===S.activeTimer); loadTimer(S.timers[(i+1)%S.timers.length].id); }
+  else if(e.key==='n'||e.key==='N') nextTimer();
 });
+
+/* ---------- teacher controller sync ---------- */
+function nextTimer(){ const i=S.timers.findIndex(t=>t.id===S.activeTimer); loadTimer(S.timers[(i+1)%S.timers.length].id); }
+const openControls = () => { const w = window.open(location.pathname+'?control=1','cafeControls','width=560,height=900'); if(!w) toast('Allow pop-ups for this site to open the controls'); };
+$('#ctlBtn').onclick = openControls; $('#ctlBtn2').onclick = openControls;
+$('#gateBtn').onclick = () => { $('#gate').classList.add('gone'); audioCtx(); document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(()=>{}); };
+
+function refreshInputs(){
+  if(document.activeElement !== $('#classLabel')) $('#classLabel').value = S.classLabel;
+  if(document.activeElement !== $('#spotUrl')) $('#spotUrl').value = S.spotUrl;
+  $('#vol').value = S.vol; $('#optShuffle').checked = S.shuffle;
+  [['#rainSound','rainSound'],['#optSteam','steam'],['#optDrift','drift'],['#optIdle','idle'],['#optCard','card'],['#optBell','bell'],['#optStopMusic','stopMusic']].forEach(([id,k])=>$(id).checked=!!S[k]);
+}
+function applyRemoteState(n){
+  const prev = Object.assign({}, S);
+  Object.assign(S, n); store.set(S);
+  if(CONTROL){ renderViewGrid(); applyLook(); renderTimerList(); renderMusic(); refreshInputs(); return; }
+  if(prev.customUrl !== S.customUrl) customObjUrl = '';
+  if(prev.view!==S.view || prev.photoIdx!==S.photoIdx || prev.customUrl!==S.customUrl) loadPhoto(); else renderViewGrid();
+  document.body.classList.toggle('steamOn',S.steam); document.body.classList.toggle('drift',S.drift);
+  applyLook();
+  if(prev.activeTimer !== S.activeTimer) loadTimer(S.activeTimer);
+  else { const t = activeTimer(), nt = Math.round((+t.min||0)*60); if(!running && nt!==total){ total = remaining = nt; } renderCard(); renderTimerList(); }
+  if(prev.src !== S.src){ if(S.src!=='files') audio.pause(); renderMusic(); }
+  else if(prev.spotUrl !== S.spotUrl && S.src==='spotify') mountSpotify();
+  if(!fadeT) audio.volume = S.vol;
+  refreshInputs();
+}
+const CMDS = {
+  toggle(){ audioCtx(); running ? stopTimer() : startTimer(); },
+  plus(){ $('#plusBtn').click(); },
+  reset(){ loadTimer(S.activeTimer); },
+  next(){ nextTimer(); },
+  mplay(){ if(tracks.length) $('#lpPlay').click(); },
+  mtrack(i){ playTrack(i); },
+  spot(){ try{ spotCtl && spotCtl.togglePlay(); }catch(e){} }
+};
+function status(){
+  if(CONTROL) return;
+  const t = activeTimer();
+  send({type:'status', title:t.name, label:S.classLabel, remaining: running ? (endAt-Date.now())/1000 : remaining, total, running,
+        tracks: tracks.map(x=>x.name), tIdx, playing: !audio.paused, src:S.src, card:S.card});
+}
+if(bc) bc.onmessage = e => {
+  const m = e.data || {};
+  if(m.type==='state') return applyRemoteState(m.S);
+  if(CONTROL){ if(m.type==='status') showStatus(m); return; }
+  if(m.type==='hello') return status();
+  if(m.type==='cmd' && CMDS[m.cmd]) { CMDS[m.cmd](m.arg); status(); }
+  if(m.type==='photo' && m.file){ customObjUrl = URL.createObjectURL(m.file); S.view='custom'; store.set(S); loadPhoto(); }
+  if(m.type==='tracks' && m.files){ addFiles(m.files); status(); }
+};
+if(!CONTROL) setInterval(status, 500);
+
+let lastStatus = 0, lastTrackKey = '';
+function showStatus(m){
+  lastStatus = Date.now();
+  $('#rLabel').textContent = (m.label ? m.label+' · ' : '') + 'on the projector now';
+  $('#rTitle').textContent = m.title;
+  $('#rTime').textContent = m.total>0 ? fmt(m.remaining) : 'No timer';
+  $('#rNote').textContent = m.total<=0 ? '' : m.running ? 'running' : (m.remaining<=0 ? 'Time’s up' : (m.remaining<m.total ? 'paused' : 'ready'));
+  $('#rStart').textContent = m.running ? 'Pause' : (m.remaining>0 && m.remaining<m.total ? 'Resume' : 'Start');
+  $('#rCard').textContent = m.card ? 'Hide card' : 'Show card';
+  $('#rMusicNote').textContent = m.src==='spotify' ? 'Spotify: press play once on the café screen itself; after that this button can pause and resume.' : m.src==='files' ? (m.tracks.length ? (m.playing?'Playing: ':'Paused: ')+(m.tracks[m.tIdx]||'') : 'Add songs under Music below.') : '';
+  const key = m.tracks.join('|')+'#'+m.tIdx;
+  if(key !== lastTrackKey){ lastTrackKey = key; tracks = m.tracks.map(n=>({name:n})); tIdx = m.tIdx; renderTracks(); }
+}
+if(CONTROL){
+  document.title = 'Corner Café · Teacher controls';
+  $('#drawerTitle').textContent = 'Teacher controls';
+  drawer.classList.add('open');
+  $('#rStart').onclick = () => send({type:'cmd',cmd:'toggle'});
+  $('#rPlus').onclick = () => send({type:'cmd',cmd:'plus'});
+  $('#rReset').onclick = () => send({type:'cmd',cmd:'reset'});
+  $('#rNext').onclick = () => send({type:'cmd',cmd:'next'});
+  $('#rCard').onclick = () => { S.card = !S.card; save(); refreshInputs(); };
+  $('#rMusic').onclick = () => send({type:'cmd',cmd: S.src==='spotify' ? 'spot' : 'mplay'});
+  $('#rOpen').onclick = () => window.open(location.pathname, 'cafeScreen');
+  if(!bc) $('#rConn').textContent = 'This browser can’t link windows. Use Chrome.';
+  setInterval(()=>{ const ok = Date.now()-lastStatus < 2500; const c=$('#rConn'); c.classList.toggle('ok',ok);
+    c.textContent = ok ? 'Connected to the café screen' : 'Café screen not found. Open it in this same browser with “Open café screen”.'; }, 1000);
+  send({type:'hello'});
+}
 
 /* ---------- go ---------- */
 loadPhoto(); applyLook(); renderMusic(); renderTracks(); loadTimer(S.activeTimer);
+if(CONTROL) send({type:'hello'});
 })();
 </script>
 </body>
