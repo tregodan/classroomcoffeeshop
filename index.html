@@ -265,16 +265,19 @@ body.control #closeDrawer,body.control #scrim,body.control .projOnly{display:non
         <path d="M1418 276c-18-30 6-52 20-40 14-16 34 12 18 40z" fill="#4E7356"/>
       </g>
       <!-- letter board -->
-      <g transform="translate(1150,380) scale(.9)">
-        <rect x="0" y="0" width="300" height="190" rx="8" fill="#1E1B19"/>
-        <rect x="10" y="10" width="280" height="170" rx="4" fill="#26221F"/>
+      <g transform="translate(1150,370) scale(.9)">
+        <rect x="0" y="0" width="300" height="200" rx="8" fill="#1E1B19"/>
+        <rect x="10" y="10" width="280" height="180" rx="4" fill="#26221F"/>
         <g fill="#000" opacity=".25">
           <rect x="10" y="40" width="280" height="1"/><rect x="10" y="70" width="280" height="1"/><rect x="10" y="100" width="280" height="1"/><rect x="10" y="130" width="280" height="1"/><rect x="10" y="160" width="280" height="1"/>
         </g>
-        <text x="150" y="48" text-anchor="middle" font-family="Bricolage Grotesque, sans-serif" font-weight="700" font-size="20" letter-spacing="4" fill="#F4EFE6">CORNER CAFÉ</text>
-        <text x="150" y="88" text-anchor="middle" font-family="Bricolage Grotesque, sans-serif" font-weight="600" font-size="15" letter-spacing="2" fill="#F2B85E">TODAY</text>
-        <text id="boardLine1" x="150" y="122" text-anchor="middle" font-family="Bricolage Grotesque, sans-serif" font-weight="600" font-size="19" letter-spacing="2" fill="#F4EFE6"></text>
-        <text id="boardLine2" x="150" y="152" text-anchor="middle" font-family="Bricolage Grotesque, sans-serif" font-weight="600" font-size="15" letter-spacing="2" fill="#CFC6B8"></text>
+        <g font-family="Bricolage Grotesque, sans-serif" text-anchor="middle">
+        <text id="boardHead" x="150" y="44" font-weight="700" font-size="19" letter-spacing="3" fill="#F4EFE6">CORNER CAFÉ</text>
+        <text x="150" y="80" font-weight="600" font-size="14" letter-spacing="3" fill="#F2B85E">TODAY</text>
+        <text id="boardGoal" x="150" y="114" font-weight="700" font-size="19" letter-spacing="1.5" fill="#F4EFE6"></text>
+        <text id="boardDesc1" x="150" y="148" font-weight="600" font-size="13" letter-spacing="1.2" fill="#CFC6B8"></text>
+        <text id="boardDesc2" x="150" y="172" font-weight="600" font-size="13" letter-spacing="1.2" fill="#CFC6B8"></text>
+        </g>
       </g>
       <!-- counter -->
       <rect x="0" y="742" width="1600" height="158" style="fill:var(--tile)"/>
@@ -512,6 +515,12 @@ body.control #closeDrawer,body.control #scrim,body.control .projOnly{display:non
   <h3>The card</h3>
   <label class="field">Class name (shows on the card and the café sign)<input id="classLabel" maxlength="40" placeholder="Period 3 · English 9"></label>
   <label class="check">Show the card<input type="checkbox" id="optCard" checked></label>
+
+  <h3>The café sign</h3>
+  <p class="hint" style="margin-top:0">The letter board on the wall. The top line shows your class name.</p>
+  <label class="field">Today we’re… (goal of the day)<input id="signGoal" maxlength="40" placeholder="Writing thesis statements"></label>
+  <label class="field" style="margin-top:8px">A bit more context (optional)<input id="signDesc" maxlength="70" placeholder="Bring your draft. We’ll peer review in pairs."></label>
+  <p class="hint">Leave the goal blank and the sign shows the current activity instead.</p>
   <label class="check">Ring a soft bell when time is up<input type="checkbox" id="optBell" checked></label>
   <label class="check">Stop the music when time is up<input type="checkbox" id="optStopMusic" checked></label>
 
@@ -573,7 +582,7 @@ const saved = store.get();
 const S = Object.assign({
   view:'urban', photoIdx:0, customUrl:'', tod:'auto', wx:'rain', rainSound:false,
   steam:true, drift:true, barista:true, dj:true, idle:true, card:true, bell:true, stopMusic:true,
-  classLabel:'', timers:DEFAULT_TIMERS, activeTimer:'t3', src:'spotify', spotUrl:'', shuffle:false, vol:0.7
+  classLabel:'', signGoal:'', signDesc:'', timers:DEFAULT_TIMERS, activeTimer:'t3', src:'spotify', spotUrl:'', shuffle:false, vol:0.7
 }, saved);
 if(!Array.isArray(S.timers) || !S.timers.length) S.timers = DEFAULT_TIMERS.slice();
 const CONTROL = new URLSearchParams(location.search).has('control');
@@ -759,8 +768,29 @@ function renderCard(){
   $('#cardSteps').innerHTML = '';
   (t.steps||[]).filter(Boolean).forEach(s=>{ const li=document.createElement('li'); li.textContent=s; $('#cardSteps').appendChild(li); });
   updateTime();
-  $('#boardLine1').textContent = (S.classLabel || 'Good to see you').toUpperCase().slice(0,20);
-  $('#boardLine2').textContent = t.name.toUpperCase().slice(0,26);
+  renderBoard();
+}
+function wrapWords(text, max, lines){
+  const words = text.split(/\s+/).filter(Boolean), out = [''];
+  for(const w of words){
+    const cur = out[out.length-1];
+    if((cur ? cur.length+1 : 0) + w.length <= max) out[out.length-1] = cur ? cur+' '+w : w;
+    else if(out.length < lines) out.push(w.slice(0,max));
+    else { out[out.length-1] = (cur+'…').slice(0,max); break; }
+  }
+  return out;
+}
+function renderBoard(){
+  const t = activeTimer();
+  const head = (S.classLabel || 'Corner Café').toUpperCase();
+  const hEl = $('#boardHead'); hEl.textContent = head.slice(0,24); hEl.setAttribute('font-size', head.length>18 ? 15 : 19);
+  const goal = (S.signGoal || t.name).toUpperCase();
+  const gEl = $('#boardGoal'), g = goal.length;
+  gEl.setAttribute('font-size', g<=17 ? 19 : g<=22 ? 16 : g<=28 ? 13.5 : 12);
+  gEl.setAttribute('letter-spacing', g<=22 ? 1.5 : .6);
+  gEl.textContent = goal.slice(0,34);
+  const [d1='', d2=''] = wrapWords((S.signDesc||'').toUpperCase(), 28, 2);
+  $('#boardDesc1').textContent = d1; $('#boardDesc2').textContent = d2;
 }
 function updateTime(){
   if(running) remaining = (endAt - Date.now())/1000;
@@ -969,6 +999,9 @@ bindCheck('#optStopMusic','stopMusic');
 document.body.classList.toggle('steamOn',S.steam); document.body.classList.toggle('drift',S.drift);
 $('#classLabel').value = S.classLabel;
 $('#classLabel').oninput = e => { S.classLabel = e.target.value; save(); renderCard(); };
+$('#signGoal').value = S.signGoal; $('#signDesc').value = S.signDesc;
+$('#signGoal').oninput = e => { S.signGoal = e.target.value; save(); renderBoard(); };
+$('#signDesc').oninput = e => { S.signDesc = e.target.value; save(); renderBoard(); };
 
 const drawer = $('#drawer');
 function openDrawer(){ drawer.classList.add('open'); }
@@ -1005,6 +1038,8 @@ $('#gateBtn').onclick = () => { $('#gate').classList.add('gone'); audioCtx(); do
 function refreshInputs(){
   if(document.activeElement !== $('#classLabel')) $('#classLabel').value = S.classLabel;
   if(document.activeElement !== $('#spotUrl')) $('#spotUrl').value = S.spotUrl;
+  if(document.activeElement !== $('#signGoal')) $('#signGoal').value = S.signGoal||'';
+  if(document.activeElement !== $('#signDesc')) $('#signDesc').value = S.signDesc||'';
   $('#vol').value = S.vol; $('#optShuffle').checked = S.shuffle;
   [['#rainSound','rainSound'],['#optSteam','steam'],['#optBarista','barista'],['#optDJ','dj'],['#optDrift','drift'],['#optIdle','idle'],['#optCard','card'],['#optBell','bell'],['#optStopMusic','stopMusic']].forEach(([id,k])=>$(id).checked=!!S[k]);
 }
