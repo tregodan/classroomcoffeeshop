@@ -466,7 +466,7 @@ body.control #closeDrawer,body.control #scrim,body.control .projOnly{display:non
       <h1 id="rTitle">—</h1>
       <div style="display:flex;align-items:baseline;gap:12px"><span id="rTime">--:--</span><span id="rNote" class="hint" style="margin:0"></span></div>
       <div class="rRow"><button class="btn primary" id="rStart">Start</button><button class="btn" id="rPlus">+1 min</button><button class="btn" id="rReset">Reset</button><button class="btn" id="rNext">Next timer</button></div>
-      <div class="rRow"><button class="btn" id="rCard">Hide card</button><button class="btn" id="rMusic">Play / pause music</button><button class="btn" id="rOpen">Open café screen</button></div>
+      <div class="rRow"><button class="btn" id="rCard">Hide card</button><button class="btn" id="rTimer">Hide timer</button><button class="btn" id="rMusic">Play / pause music</button><button class="btn" id="rOpen">Open café screen</button></div>
       <p class="hint" id="rMusicNote" style="margin:0"></p>
     </div>
   </div>
@@ -505,16 +505,18 @@ body.control #closeDrawer,body.control #scrim,body.control .projOnly{display:non
     <label class="field">What students do<input id="edName" maxlength="60"></label>
     <div class="row" style="margin:0">
       <label class="field">Minutes<input id="edMin" type="number" min="0" max="180" step="0.5"></label>
+      <label class="check" style="align-self:flex-end;padding:0 0 8px;gap:8px">No timer<input type="checkbox" id="edNoTimer"></label>
       <label class="field">Card style<select id="edStyle"><option value="right">Card on the right</option><option value="left">Card on the left</option><option value="center">Big and centered</option></select></label>
     </div>
     <label class="field">Steps (one per line, optional)<textarea id="edSteps"></textarea></label>
     <div class="row" style="margin:0"><button class="btn primary" id="edSave">Save timer</button><button class="btn" id="edCancel">Cancel</button><button class="btn" id="edDelete" style="margin-left:auto">Delete</button></div>
-    <p class="hint">Set minutes to 0 to show the card with no countdown.</p>
+    <p class="hint">“No timer” shows the activity and steps without a countdown.</p>
   </div>
 
   <h3>The card</h3>
   <label class="field">Class name (shows on the card and the café sign)<input id="classLabel" maxlength="40" placeholder="Period 3 · English 9"></label>
   <label class="check">Show the card<input type="checkbox" id="optCard" checked></label>
+  <label class="check">Show the countdown on the card<input type="checkbox" id="optTimer" checked></label>
 
   <h3>The café sign</h3>
   <p class="hint" style="margin-top:0">The letter board on the wall.</p>
@@ -582,7 +584,7 @@ const store = {
 const saved = store.get();
 const S = Object.assign({
   view:'urban', photoIdx:0, customUrl:'', tod:'auto', wx:'rain', rainSound:false,
-  steam:true, drift:true, barista:true, dj:true, idle:true, card:true, bell:true, stopMusic:true,
+  steam:true, drift:true, barista:true, dj:true, idle:true, card:true, showTimer:true, bell:true, stopMusic:true,
   classLabel:'', signTitle:'', signGoal:'', signDesc:'', timers:DEFAULT_TIMERS, activeTimer:'t3', src:'spotify', spotUrl:'', shuffle:false, vol:0.7
 }, saved);
 if(!Array.isArray(S.timers) || !S.timers.length) S.timers = DEFAULT_TIMERS.slice();
@@ -763,7 +765,7 @@ const activeTimer = () => S.timers.find(t=>t.id===S.activeTimer) || S.timers[0];
 const fmt = s => { s=Math.max(0,Math.ceil(s)); const m=Math.floor(s/60), r=s%60; return (m<10?'0':'')+m+':'+(r<10?'0':'')+r; };
 function renderCard(){
   const t = activeTimer(), card = $('#card');
-  card.className = 'glass pos-' + (t.style||'right') + (S.card?'':' hidden') + (t.min>0?'':' noTimer');
+  card.className = 'glass pos-' + (t.style||'right') + (S.card?'':' hidden') + ((t.min>0 && S.showTimer!==false)?'':' noTimer');
   $('#cardLabel').textContent = S.classLabel || 'Right now';
   $('#cardTitle').textContent = t.name;
   $('#cardSteps').innerHTML = '';
@@ -847,17 +849,19 @@ function renderTimerList(){
 function openEditor(t){
   editing = t ? t.id : null;
   $('#edName').value = t ? t.name : '';
-  $('#edMin').value = t ? t.min : 10;
+  $('#edMin').value = t ? (t.min||10) : 10;
+  $('#edNoTimer').checked = !!(t && !(t.min>0)); $('#edMin').disabled = $('#edNoTimer').checked;
   $('#edStyle').value = t ? (t.style||'right') : 'right';
   $('#edSteps').value = t ? (t.steps||[]).join('\n') : '';
   $('#edDelete').style.display = t ? '' : 'none';
   $('#editor').classList.add('open'); $('#edName').focus();
 }
 $('#addTimer').onclick = () => openEditor(null);
+$('#edNoTimer').onchange = e => { $('#edMin').disabled = e.target.checked; };
 $('#edCancel').onclick = () => $('#editor').classList.remove('open');
 $('#edSave').onclick = () => {
   const name = $('#edName').value.trim() || 'Work time';
-  const min = Math.max(0, Math.min(180, parseFloat($('#edMin').value)||0));
+  const min = $('#edNoTimer').checked ? 0 : Math.max(0, Math.min(180, parseFloat($('#edMin').value)||0));
   const steps = $('#edSteps').value.split('\n').map(s=>s.trim()).filter(Boolean).slice(0,5);
   const style = $('#edStyle').value;
   if(editing){ Object.assign(S.timers.find(t=>t.id===editing), {name,min,steps,style}); }
@@ -996,6 +1000,7 @@ crew();
 bindCheck('#optDrift','drift',()=>document.body.classList.toggle('drift',S.drift));
 bindCheck('#optIdle','idle');
 bindCheck('#optCard','card',renderCard);
+bindCheck('#optTimer','showTimer',renderCard);
 bindCheck('#optBell','bell');
 bindCheck('#optStopMusic','stopMusic');
 document.body.classList.toggle('steamOn',S.steam); document.body.classList.toggle('drift',S.drift);
@@ -1045,7 +1050,7 @@ function refreshInputs(){
   if(document.activeElement !== $('#signGoal')) $('#signGoal').value = S.signGoal||'';
   if(document.activeElement !== $('#signDesc')) $('#signDesc').value = S.signDesc||'';
   $('#vol').value = S.vol; $('#optShuffle').checked = S.shuffle;
-  [['#rainSound','rainSound'],['#optSteam','steam'],['#optBarista','barista'],['#optDJ','dj'],['#optDrift','drift'],['#optIdle','idle'],['#optCard','card'],['#optBell','bell'],['#optStopMusic','stopMusic']].forEach(([id,k])=>$(id).checked=!!S[k]);
+  [['#rainSound','rainSound'],['#optSteam','steam'],['#optBarista','barista'],['#optDJ','dj'],['#optDrift','drift'],['#optIdle','idle'],['#optCard','card'],['#optTimer','showTimer'],['#optBell','bell'],['#optStopMusic','stopMusic']].forEach(([id,k])=>$(id).checked=!!S[k]);
 }
 function applyRemoteState(n){
   const prev = Object.assign({}, S);
@@ -1097,6 +1102,7 @@ function showStatus(m){
   $('#rNote').textContent = m.total<=0 ? '' : m.running ? 'running' : (m.remaining<=0 ? 'Time’s up' : (m.remaining<m.total ? 'paused' : 'ready'));
   $('#rStart').textContent = m.running ? 'Pause' : (m.remaining>0 && m.remaining<m.total ? 'Resume' : 'Start');
   $('#rCard').textContent = m.card ? 'Hide card' : 'Show card';
+  $('#rTimer').textContent = S.showTimer===false ? 'Show timer' : 'Hide timer';
   $('#rMusicNote').textContent = m.src==='spotify' ? 'Spotify: press play once on the café screen itself; after that this button can pause and resume.' : m.src==='files' ? (m.tracks.length ? (m.playing?'Playing: ':'Paused: ')+(m.tracks[m.tIdx]||'') : 'Add songs under Music below.') : '';
   const key = m.tracks.join('|')+'#'+m.tIdx;
   if(key !== lastTrackKey){ lastTrackKey = key; tracks = m.tracks.map(n=>({name:n})); tIdx = m.tIdx; renderTracks(); }
@@ -1110,6 +1116,8 @@ if(CONTROL){
   $('#rReset').onclick = () => send({type:'cmd',cmd:'reset'});
   $('#rNext').onclick = () => send({type:'cmd',cmd:'next'});
   $('#rCard').onclick = () => { S.card = !S.card; save(); refreshInputs(); };
+  $('#rTimer').onclick = () => { S.showTimer = S.showTimer===false; save(); refreshInputs(); $('#rTimer').textContent = S.showTimer===false ? 'Show timer' : 'Hide timer'; };
+  $('#rTimer').textContent = S.showTimer===false ? 'Show timer' : 'Hide timer';
   $('#rMusic').onclick = () => send({type:'cmd',cmd: S.src==='spotify' ? 'spot' : 'mplay'});
   $('#rOpen').onclick = () => window.open(location.pathname, 'cafeScreen');
   if(!bc) $('#rConn').textContent = 'This browser can’t link windows. Use Chrome.';
