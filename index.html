@@ -517,8 +517,9 @@ body.control #closeDrawer,body.control #scrim,body.control .projOnly{display:non
   <label class="check">Show the card<input type="checkbox" id="optCard" checked></label>
 
   <h3>The café sign</h3>
-  <p class="hint" style="margin-top:0">The letter board on the wall. The top line shows your class name.</p>
-  <label class="field">Today we’re… (goal of the day)<input id="signGoal" maxlength="40" placeholder="Writing thesis statements"></label>
+  <p class="hint" style="margin-top:0">The letter board on the wall.</p>
+  <label class="field">Sign title (blank = your class name, or “Corner Café”)<input id="signTitle" maxlength="30" placeholder="Corner Café"></label>
+  <label class="field" style="margin-top:8px">Today we’re… (goal of the day)<input id="signGoal" maxlength="40" placeholder="Writing thesis statements"></label>
   <label class="field" style="margin-top:8px">A bit more context (optional)<input id="signDesc" maxlength="70" placeholder="Bring your draft. We’ll peer review in pairs."></label>
   <p class="hint">Leave the goal blank and the sign shows the current activity instead.</p>
   <label class="check">Ring a soft bell when time is up<input type="checkbox" id="optBell" checked></label>
@@ -582,7 +583,7 @@ const saved = store.get();
 const S = Object.assign({
   view:'urban', photoIdx:0, customUrl:'', tod:'auto', wx:'rain', rainSound:false,
   steam:true, drift:true, barista:true, dj:true, idle:true, card:true, bell:true, stopMusic:true,
-  classLabel:'', signGoal:'', signDesc:'', timers:DEFAULT_TIMERS, activeTimer:'t3', src:'spotify', spotUrl:'', shuffle:false, vol:0.7
+  classLabel:'', signTitle:'', signGoal:'', signDesc:'', timers:DEFAULT_TIMERS, activeTimer:'t3', src:'spotify', spotUrl:'', shuffle:false, vol:0.7
 }, saved);
 if(!Array.isArray(S.timers) || !S.timers.length) S.timers = DEFAULT_TIMERS.slice();
 const CONTROL = new URLSearchParams(location.search).has('control');
@@ -782,7 +783,8 @@ function wrapWords(text, max, lines){
 }
 function renderBoard(){
   const t = activeTimer();
-  const head = (S.classLabel || 'Corner Café').toUpperCase();
+  const head = (S.signTitle || S.classLabel || 'Corner Café').toUpperCase();
+  $('#signTitle').placeholder = S.classLabel || 'Corner Café';
   const hEl = $('#boardHead'); hEl.textContent = head.slice(0,24); hEl.setAttribute('font-size', head.length>18 ? 15 : 19);
   const goal = (S.signGoal || t.name).toUpperCase();
   const gEl = $('#boardGoal'), g = goal.length;
@@ -999,6 +1001,7 @@ bindCheck('#optStopMusic','stopMusic');
 document.body.classList.toggle('steamOn',S.steam); document.body.classList.toggle('drift',S.drift);
 $('#classLabel').value = S.classLabel;
 $('#classLabel').oninput = e => { S.classLabel = e.target.value; save(); renderCard(); };
+$('#signTitle').value = S.signTitle||''; $('#signTitle').oninput = e => { S.signTitle = e.target.value; save(); renderBoard(); };
 $('#signGoal').value = S.signGoal; $('#signDesc').value = S.signDesc;
 $('#signGoal').oninput = e => { S.signGoal = e.target.value; save(); renderBoard(); };
 $('#signDesc').oninput = e => { S.signDesc = e.target.value; save(); renderBoard(); };
@@ -1038,6 +1041,7 @@ $('#gateBtn').onclick = () => { $('#gate').classList.add('gone'); audioCtx(); do
 function refreshInputs(){
   if(document.activeElement !== $('#classLabel')) $('#classLabel').value = S.classLabel;
   if(document.activeElement !== $('#spotUrl')) $('#spotUrl').value = S.spotUrl;
+  if(document.activeElement !== $('#signTitle')) $('#signTitle').value = S.signTitle||'';
   if(document.activeElement !== $('#signGoal')) $('#signGoal').value = S.signGoal||'';
   if(document.activeElement !== $('#signDesc')) $('#signDesc').value = S.signDesc||'';
   $('#vol').value = S.vol; $('#optShuffle').checked = S.shuffle;
