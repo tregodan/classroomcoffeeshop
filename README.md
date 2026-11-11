@@ -1,19 +1,21 @@
 # Corner Café ☕ — a classroom coffee-shop screen
 
-An ad-free "jazz café" scene for the classroom projector. You're inside a modern coffee shop looking out the window at a real place. A card shows students what they should be working on right now, with a countdown.
+An ad-free "jazz café" scene for the classroom projector. You're inside a modern coffee shop looking out the window at a real place. A board shows students the task they should be working on right now, with an optional countdown.
 
 ## What it does
 - **Out the window:** real photos of seven places (urban, modern city, castle, country, village, beach, mountains), or your own photo.
 - **Time of day:** morning, noon, or night (or follow the clock). The café lighting changes to match.
 - **Outside:** clear, sun, rain, snow, or fog, shown over the photo, with optional rain sounds.
-- **Class timers:** add your own, with a name, minutes, steps, and card style. At zero, the music stops and a soft bell rings.
+- **Tasks:** add your own, each with steps, an optional timer, and a board style. At zero, the music stops and a soft bell rings.
+- **Café sign:** a title, today's goal, and a line of context on the letter board.
+- **Barista and DJ:** optional animated café staff.
 - **Music:** paste a Spotify playlist link, or use your own MP3s (these fade out gently).
 - Settings save in your browser.
 
 ## Use it
 Open the GitHub Pages link in Chrome on the classroom computer and click **Open the café**.
 
-**Teacher controls:** click **Teacher controls** and drag that window to your own screen. The café stays full screen on the projector. Use *Extend* display (Windows: `Win + P`), not *Duplicate*, so students don't see the controls. Everything you change there updates the projector live: timers, view, weather, music, and the card.
+**Teacher controls:** click **Teacher controls** and drag that window to your own screen. The café stays full screen on the projector. Use *Extend* display (Windows: `Win + P`), not *Duplicate*, so students don't see the controls. Everything you change there updates the projector live: tasks, view, weather, music, the board, and the sign.
 
 Shortcuts: `Space` start/pause · `F` full screen · `S` settings · `→` next view · `N` next timer
 

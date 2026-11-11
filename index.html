@@ -441,7 +441,7 @@ body.control #closeDrawer,body.control #scrim,body.control .projOnly{display:non
     <button class="pill primary" id="startBtn">Start timer</button>
     <button class="pill" id="plusBtn" title="Add one minute">+1 min</button>
     <button class="pill" id="resetBtn">Reset</button>
-    <button class="pill" id="hideTimerBtn">Hide timer</button>
+    <button class="pill" id="hideTimerBtn">Hide board</button>
     <span class="sep"></span>
     <button class="pill" id="nextView" title="Next window view">View: <span id="viewName"></span></button>
     <button class="pill" id="todBtn" title="Time of day">Time: <span id="todName"></span></button>
@@ -466,8 +466,8 @@ body.control #closeDrawer,body.control #scrim,body.control .projOnly{display:non
       <span class="hint" style="margin:0" id="rLabel">On the projector now</span>
       <h1 id="rTitle">—</h1>
       <div style="display:flex;align-items:baseline;gap:12px"><span id="rTime">--:--</span><span id="rNote" class="hint" style="margin:0"></span></div>
-      <div class="rRow"><button class="btn primary" id="rStart">Start</button><button class="btn" id="rPlus">+1 min</button><button class="btn" id="rReset">Reset</button><button class="btn" id="rNext">Next timer</button></div>
-      <div class="rRow"><button class="btn" id="rCard">Hide card</button><button class="btn" id="rTimer">Hide timer</button><button class="btn" id="rMusic">Play / pause music</button><button class="btn" id="rOpen">Open café screen</button></div>
+      <div class="rRow"><button class="btn primary" id="rStart">Start</button><button class="btn" id="rPlus">+1 min</button><button class="btn" id="rReset">Reset</button><button class="btn" id="rNext">Next task</button></div>
+      <div class="rRow"><button class="btn" id="rCard">Hide board</button><button class="btn" id="rTimer">Hide this task’s timer</button><button class="btn" id="rMusic">Play / pause music</button><button class="btn" id="rOpen">Open café screen</button></div>
       <p class="hint" id="rMusicNote" style="margin:0"></p>
     </div>
   </div>
@@ -499,25 +499,26 @@ body.control #closeDrawer,body.control #scrim,body.control .projOnly{display:non
   <label class="check">Slow camera drift outside<input type="checkbox" id="optDrift" checked></label>
   <label class="check">Hide controls when the mouse is still<input type="checkbox" id="optIdle" checked></label>
 
-  <h3>Class timers</h3>
+  <h3>Tasks</h3>
+  <p class="hint" style="margin-top:0">Each task is what students do right now, with steps and an optional timer.</p>
   <div class="timerList" id="timerList"></div>
-  <div class="row"><button class="btn dashed" id="addTimer">+ Add timer</button></div>
+  <div class="row"><button class="btn dashed" id="addTimer">+ Add task</button></div>
   <div class="editor" id="editor">
-    <label class="field">What students do<input id="edName" maxlength="60"></label>
+    <label class="field">Task (what students do)<input id="edName" maxlength="60"></label>
     <div class="row" style="margin:0">
       <label class="field">Minutes<input id="edMin" type="number" min="0" max="180" step="0.5"></label>
-      <label class="check" style="align-self:flex-end;padding:0 0 8px;gap:8px">No timer<input type="checkbox" id="edNoTimer"></label>
-      <label class="field">Card style<select id="edStyle"><option value="right">Card on the right</option><option value="left">Card on the left</option><option value="center">Big and centered</option></select></label>
+      <label class="check" style="align-self:flex-end;padding:0 0 8px;gap:8px">Show timer<input type="checkbox" id="edShowTimer" checked></label>
+      <label class="field">Board style<select id="edStyle"><option value="right">Board on the right</option><option value="left">Board on the left</option><option value="center">Big and centered</option></select></label>
     </div>
     <label class="field">Steps (one per line, optional)<textarea id="edSteps"></textarea></label>
-    <div class="row" style="margin:0"><button class="btn primary" id="edSave">Save timer</button><button class="btn" id="edCancel">Cancel</button><button class="btn" id="edDelete" style="margin-left:auto">Delete</button></div>
-    <p class="hint">“No timer” shows the activity and steps without a countdown.</p>
+    <div class="row" style="margin:0"><button class="btn primary" id="edSave">Save task</button><button class="btn" id="edCancel">Cancel</button><button class="btn" id="edDelete" style="margin-left:auto">Delete</button></div>
+    <p class="hint">Untick “Show timer” to show the task and steps with no countdown.</p>
   </div>
 
-  <h3>The card</h3>
-  <label class="field">Class name (shows on the card and the café sign)<input id="classLabel" maxlength="40" placeholder="Period 3 · English 9"></label>
-  <label class="check">Show the card<input type="checkbox" id="optCard" checked></label>
-  <label class="check">Show the countdown on the card<input type="checkbox" id="optTimer" checked></label>
+  <h3>The board</h3>
+  <p class="hint" style="margin-top:0">The “Right now” panel that shows the task, its steps and the timer.</p>
+  <label class="field">Class name (shows on the board and the café sign)<input id="classLabel" maxlength="40" placeholder="Period 3 · English 9"></label>
+  <label class="check">Show the board<input type="checkbox" id="optCard" checked></label>
 
   <h3>The café sign</h3>
   <p class="hint" style="margin-top:0">The letter board on the wall.</p>
@@ -545,7 +546,7 @@ body.control #closeDrawer,body.control #scrim,body.control .projOnly{display:non
   </div>
 
   <h3>Shortcuts</h3>
-  <p class="hint"><kbd>Space</kbd> start / pause timer · <kbd>F</kbd> full screen · <kbd>S</kbd> settings · <kbd>→</kbd> next view · <kbd>N</kbd> next timer</p>
+  <p class="hint"><kbd>Space</kbd> start / pause timer · <kbd>F</kbd> full screen · <kbd>S</kbd> settings · <kbd>→</kbd> next view · <kbd>N</kbd> next task</p>
   <p class="hint">Window photos from <a href="https://www.pexels.com" target="_blank" rel="noopener">Pexels</a> (free to use). Settings save in this browser.</p>
 </aside>
 <div id="scrim"></div>
@@ -585,7 +586,7 @@ const store = {
 const saved = store.get();
 const S = Object.assign({
   view:'urban', photoIdx:0, customUrl:'', tod:'auto', wx:'rain', rainSound:false,
-  steam:true, drift:true, barista:true, dj:true, idle:true, card:true, showTimer:true, bell:true, stopMusic:true,
+  steam:true, drift:true, barista:true, dj:true, idle:true, card:true, bell:true, stopMusic:true,
   classLabel:'', signTitle:'', signGoal:'', signDesc:'', timers:DEFAULT_TIMERS, activeTimer:'t3', src:'spotify', spotUrl:'', shuffle:false, vol:0.7
 }, saved);
 if(!Array.isArray(S.timers) || !S.timers.length) S.timers = DEFAULT_TIMERS.slice();
@@ -766,8 +767,8 @@ const activeTimer = () => S.timers.find(t=>t.id===S.activeTimer) || S.timers[0];
 const fmt = s => { s=Math.max(0,Math.ceil(s)); const m=Math.floor(s/60), r=s%60; return (m<10?'0':'')+m+':'+(r<10?'0':'')+r; };
 function renderCard(){
   const t = activeTimer(), card = $('#card');
-  $('#hideTimerBtn').textContent = S.showTimer===false ? 'Show timer' : 'Hide timer';
-  card.className = 'glass pos-' + (t.style||'right') + (S.card?'':' hidden') + ((t.min>0 && S.showTimer!==false)?'':' noTimer');
+  $('#hideTimerBtn').textContent = S.card ? 'Hide board' : 'Show board';
+  card.className = 'glass pos-' + (t.style||'right') + (S.card?'':' hidden') + ((t.min>0 && !t.hideTimer)?'':' noTimer');
   $('#cardLabel').textContent = S.classLabel || 'Right now';
   $('#cardTitle').textContent = t.name;
   $('#cardSteps').innerHTML = '';
@@ -832,7 +833,7 @@ function timeUp(){
 $('#startBtn').onclick = () => { audioCtx(); running ? stopTimer() : startTimer(); };
 $('#plusBtn').onclick = () => { if(running) endAt += 60000; else { remaining += 60; if(remaining>total) total = remaining; } updateTime(); };
 $('#resetBtn').onclick = () => loadTimer(S.activeTimer);
-$('#hideTimerBtn').onclick = () => { S.showTimer = S.showTimer===false; save(); renderCard(); refreshInputs(); };
+$('#hideTimerBtn').onclick = () => { S.card = !S.card; save(); renderCard(); refreshInputs(); };
 
 /* timer list + editor */
 let editing = null;
@@ -842,7 +843,7 @@ function renderTimerList(){
     const d = document.createElement('div'); d.className='tItem'+(t.id===S.activeTimer?' active':'');
     d.innerHTML = `<div class="nm"><b></b><small></small></div><button class="btn primary">Show</button><button class="btn">Edit</button>`;
     d.querySelector('b').textContent = t.name;
-    d.querySelector('small').textContent = (t.min>0? t.min+' min':'no timer') + ' · ' + ({right:'card right',left:'card left',center:'big centered'}[t.style||'right']);
+    d.querySelector('small').textContent = ((t.min>0 && !t.hideTimer)? t.min+' min':'no timer') + ' · ' + ({right:'board right',left:'board left',center:'big centered'}[t.style||'right']);
     const [show, edit] = d.querySelectorAll('button');
     show.onclick = () => { loadTimer(t.id); };
     edit.onclick = () => openEditor(t);
@@ -853,26 +854,27 @@ function openEditor(t){
   editing = t ? t.id : null;
   $('#edName').value = t ? t.name : '';
   $('#edMin').value = t ? (t.min||10) : 10;
-  $('#edNoTimer').checked = !!(t && !(t.min>0)); $('#edMin').disabled = $('#edNoTimer').checked;
+  $('#edShowTimer').checked = !(t && (t.hideTimer || !(t.min>0))); $('#edMin').disabled = !$('#edShowTimer').checked;
   $('#edStyle').value = t ? (t.style||'right') : 'right';
   $('#edSteps').value = t ? (t.steps||[]).join('\n') : '';
   $('#edDelete').style.display = t ? '' : 'none';
   $('#editor').classList.add('open'); $('#edName').focus();
 }
 $('#addTimer').onclick = () => openEditor(null);
-$('#edNoTimer').onchange = e => { $('#edMin').disabled = e.target.checked; };
+$('#edShowTimer').onchange = e => { $('#edMin').disabled = !e.target.checked; };
 $('#edCancel').onclick = () => $('#editor').classList.remove('open');
 $('#edSave').onclick = () => {
   const name = $('#edName').value.trim() || 'Work time';
-  const min = $('#edNoTimer').checked ? 0 : Math.max(0, Math.min(180, parseFloat($('#edMin').value)||0));
+  const hideTimer = !$('#edShowTimer').checked;
+  const min = Math.max(0, Math.min(180, parseFloat($('#edMin').value)||0));
   const steps = $('#edSteps').value.split('\n').map(s=>s.trim()).filter(Boolean).slice(0,5);
   const style = $('#edStyle').value;
-  if(editing){ Object.assign(S.timers.find(t=>t.id===editing), {name,min,steps,style}); }
-  else { editing = 't'+Date.now(); S.timers.push({id:editing,name,min,steps,style}); }
+  if(editing){ Object.assign(S.timers.find(t=>t.id===editing), {name,min,steps,style,hideTimer}); }
+  else { editing = 't'+Date.now(); S.timers.push({id:editing,name,min,steps,style,hideTimer}); }
   save(); $('#editor').classList.remove('open'); loadTimer(editing);
 };
 $('#edDelete').onclick = () => {
-  if(S.timers.length<=1) return toast('Keep at least one timer');
+  if(S.timers.length<=1) return toast('Keep at least one task');
   S.timers = S.timers.filter(t=>t.id!==editing);
   if(S.activeTimer===editing) S.activeTimer = S.timers[0].id;
   save(); $('#editor').classList.remove('open'); loadTimer(S.activeTimer);
@@ -1003,7 +1005,6 @@ crew();
 bindCheck('#optDrift','drift',()=>document.body.classList.toggle('drift',S.drift));
 bindCheck('#optIdle','idle');
 bindCheck('#optCard','card',renderCard);
-bindCheck('#optTimer','showTimer',renderCard);
 bindCheck('#optBell','bell');
 bindCheck('#optStopMusic','stopMusic');
 document.body.classList.toggle('steamOn',S.steam); document.body.classList.toggle('drift',S.drift);
@@ -1053,7 +1054,7 @@ function refreshInputs(){
   if(document.activeElement !== $('#signGoal')) $('#signGoal').value = S.signGoal||'';
   if(document.activeElement !== $('#signDesc')) $('#signDesc').value = S.signDesc||'';
   $('#vol').value = S.vol; $('#optShuffle').checked = S.shuffle;
-  [['#rainSound','rainSound'],['#optSteam','steam'],['#optBarista','barista'],['#optDJ','dj'],['#optDrift','drift'],['#optIdle','idle'],['#optCard','card'],['#optTimer','showTimer'],['#optBell','bell'],['#optStopMusic','stopMusic']].forEach(([id,k])=>$(id).checked=!!S[k]);
+  [['#rainSound','rainSound'],['#optSteam','steam'],['#optBarista','barista'],['#optDJ','dj'],['#optDrift','drift'],['#optIdle','idle'],['#optCard','card'],['#optBell','bell'],['#optStopMusic','stopMusic']].forEach(([id,k])=>$(id).checked=!!S[k]);
 }
 function applyRemoteState(n){
   const prev = Object.assign({}, S);
@@ -1102,10 +1103,11 @@ function showStatus(m){
   $('#rLabel').textContent = (m.label ? m.label+' · ' : '') + 'on the projector now';
   $('#rTitle').textContent = m.title;
   $('#rTime').textContent = m.total>0 ? fmt(m.remaining) : 'No timer';
+  $('#rTime').style.opacity = activeTimer().hideTimer ? .45 : 1;
   $('#rNote').textContent = m.total<=0 ? '' : m.running ? 'running' : (m.remaining<=0 ? 'Time’s up' : (m.remaining<m.total ? 'paused' : 'ready'));
   $('#rStart').textContent = m.running ? 'Pause' : (m.remaining>0 && m.remaining<m.total ? 'Resume' : 'Start');
-  $('#rCard').textContent = m.card ? 'Hide card' : 'Show card';
-  $('#rTimer').textContent = S.showTimer===false ? 'Show timer' : 'Hide timer';
+  $('#rCard').textContent = m.card ? 'Hide board' : 'Show board';
+  const at = activeTimer(); $('#rTimer').textContent = (at.hideTimer ? 'Show' : 'Hide') + ' this task’s timer'; $('#rTimer').disabled = !(at.min>0);
   $('#rMusicNote').textContent = m.src==='spotify' ? 'Spotify: press play once on the café screen itself; after that this button can pause and resume.' : m.src==='files' ? (m.tracks.length ? (m.playing?'Playing: ':'Paused: ')+(m.tracks[m.tIdx]||'') : 'Add songs under Music below.') : '';
   const key = m.tracks.join('|')+'#'+m.tIdx;
   if(key !== lastTrackKey){ lastTrackKey = key; tracks = m.tracks.map(n=>({name:n})); tIdx = m.tIdx; renderTracks(); }
@@ -1119,8 +1121,7 @@ if(CONTROL){
   $('#rReset').onclick = () => send({type:'cmd',cmd:'reset'});
   $('#rNext').onclick = () => send({type:'cmd',cmd:'next'});
   $('#rCard').onclick = () => { S.card = !S.card; save(); refreshInputs(); };
-  $('#rTimer').onclick = () => { S.showTimer = S.showTimer===false; save(); refreshInputs(); $('#rTimer').textContent = S.showTimer===false ? 'Show timer' : 'Hide timer'; };
-  $('#rTimer').textContent = S.showTimer===false ? 'Show timer' : 'Hide timer';
+  $('#rTimer').onclick = () => { const t = activeTimer(); t.hideTimer = !t.hideTimer; save(); renderTimerList(); };
   $('#rMusic').onclick = () => send({type:'cmd',cmd: S.src==='spotify' ? 'spot' : 'mplay'});
   $('#rOpen').onclick = () => window.open(location.pathname, 'cafeScreen');
   if(!bc) $('#rConn').textContent = 'This browser can’t link windows. Use Chrome.';
