@@ -1,29 +1,44 @@
 # Corner Café ☕ — a classroom coffee-shop screen
 
-An ad-free "jazz café" scene for the classroom projector. You're inside a modern coffee shop looking out the window at a real place. A board shows students the task they should be working on right now, with an optional countdown.
+**Live:** https://tregodan.github.io/classroomcoffeeshop/
 
-## What it does
-- **Out the window:** real photos of seven places (urban, modern city, castle, country, village, beach, mountains), or your own photo.
-- **Time of day:** morning, noon, or night (or follow the clock). The café lighting changes to match.
-- **Outside:** clear, sun, rain, snow, or fog, shown over the photo, with optional rain sounds.
-- **Tasks:** add your own, each with steps, an optional timer, and a board style. At zero, the music stops and a soft bell rings.
-- **Café sign:** a title, today's goal, and a line of context on the letter board.
-- **Barista and DJ:** optional animated café staff.
-- **Music:** paste a Spotify playlist link, or use your own MP3s (these fade out gently).
-- Settings save in your browser.
+An ad-free "jazz café" scene for the classroom projector, built to replace YouTube café videos. You're inside an illustrated modern coffee shop looking out the window at a real place. A **board** tells students the task they're working on right now, with an optional countdown.
 
-## Use it
-Open the GitHub Pages link in Chrome on the classroom computer and click **Open the café**.
+## Features
+- **Out the window:** real photos (from Pexels) of seven places: urban, modern city, castle, country, village, beach, mountains. You can also paste a photo link or use a photo from your computer.
+- **Time of day:** morning, noon, night, or follow the clock. The café's walls, lamps, and the view all change.
+- **Outside:** clear, sun, rain, snow, or fog over the photo, with optional generated rain sound.
+- **The board:** the "Right now" panel. It shows the task, up to 5 steps, and the countdown. It can sit on the right, on the left, or big and centered.
+- **Tasks:** your own list (Welcome in, Do now, Work time…). Each has steps, minutes, an optional timer (Show timer on/off), and a board style. At zero, the board pulses, a soft bell rings, and the music stops.
+- **Café sign:** the letter board on the wall. It shows a title (or your class name, or "Corner Café"), **Today**, the goal of the day, and a line of context.
+- **Barista and DJ:** optional animated staff. She pulls espresso into a glass, and he mixes on turntables.
+- **Music:** a Spotify playlist embed, or your own MP3/M4A files (these fade out at time-up).
+- **Teacher controls:** a second window that controls the projector live.
+- Settings save in the browser (localStorage).
 
-**Teacher controls:** click **Teacher controls** and drag that window to your own screen. The café stays full screen on the projector. Use *Extend* display (Windows: `Win + P`), not *Duplicate*, so students don't see the controls. Everything you change there updates the projector live: tasks, view, weather, music, the board, and the sign.
+## Using it in class
+1. Open the live link in **Chrome** on the classroom computer and click **Open the café**. That goes full screen and lets the sound play.
+2. Click **Teacher controls** in the bottom bar and drag that window to your own screen.
+3. Set the display to **Extend** (Windows: `Win + P`), not Duplicate, so students only see the café.
+4. Use the controls to start or pause tasks, hide the board, change the view or weather, and edit the sign. The projector updates instantly.
 
-Shortcuts: `Space` start/pause · `F` full screen · `S` settings · `→` next view · `N` next timer
+**Main bar:** Start timer · +1 min · Reset · Hide board · View · Time · Outside · Teacher controls · Full screen · Settings. The bar and the mouse pointer hide when the mouse is still.
 
-## Turn on the website (one time)
-Repo **Settings → Pages → Build and deployment → Source: GitHub Actions**. This takes effect immediately, with no Save button. Every push publishes the site automatically.
-After a minute it's live at `https://tregodan.github.io/classroomcoffeeshop/`.
+**Shortcuts:** `Space` start/pause · `N` next task · `→` next view · `F` full screen · `S` settings · `Esc` close settings
 
 ## Spotify notes
-Press play inside the Spotify player. Full songs need Spotify Premium signed in to Chrome on a desktop computer; otherwise Spotify plays 30-second previews. Spotify pauses when time is up (it can't fade).
+Paste a playlist, album, or song link under **Music**, then press play *inside* the Spotify player on the café screen once. Full songs need Spotify Premium signed in to Chrome on a desktop computer; otherwise Spotify plays 30-second previews. Spotify pauses at time-up (it can't fade).
 
-Photos: [Pexels](https://www.pexels.com) (free to use). The whole app is a single file, `index.html`.
+## Publishing
+GitHub Pages is set to **Source: GitHub Actions**. Every push to `main` publishes automatically through `.github/workflows/pages.yml`. The build warnings about Node 20 and Ubuntu versions are harmless.
+
+## Files
+| File | What it is |
+|---|---|
+| `index.html` | The whole app: HTML, CSS, and JS in one file |
+| `icon.svg`, `apple-touch-icon.png` | Tab and home-screen icon (mini café) |
+| `og-image.png` | 1200×630 link-preview image |
+| `.github/workflows/pages.yml` | Publishes to GitHub Pages |
+| `CLAUDE.md` | Notes for Claude when editing this project |
+
+Photos: [Pexels](https://www.pexels.com) (free to use; photographers are credited in the window).
