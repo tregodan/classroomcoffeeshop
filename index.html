@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Corner Café</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#F6F1E9; --muted:#D6CBB9; --amber:#F2B85E; --amber-ink:#17120E;
+  --glass:rgba(22,18,15,.72); --line:rgba(246,241,233,.14);
+  --wall:#ECE5DA; --wall2:#DCD2C3; --tile:#3F5C4D; --glow:.22; --shade:0;
+  --font:'Bricolage Grotesque',system-ui,sans-serif; --serif:'Instrument Serif',Georgia,serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#111;color:var(--ink);font-family:var(--font);overflow:hidden}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* ---------- scene (1600x900 world, cover-scaled) ---------- */
+#sceneWrap{position:fixed;inset:0;overflow:hidden;background:var(--wall2)}
+#scene{position:absolute;left:50%;top:50%;width:1600px;height:900px;transform-origin:center center}
+#view{position:absolute;left:130px;top:80px;width:880px;height:530px;overflow:hidden;background:#7d8b95}
+#view .fallback{position:absolute;inset:0}
+#photo{position:absolute;inset:-4%;width:108%;height:108%;object-fit:cover;opacity:0;transition:opacity 1.2s ease, filter 2s ease}
+#photo.on{opacity:1}
+body.drift #photo{animation:drift 70s ease-in-out infinite alternate}
+@keyframes drift{from{transform:scale(1) translate(0,0)}to{transform:scale(1.08) translate(-2%,-1%)}}
+#tint{position:absolute;inset:0;pointer-events:none;transition:background 2s ease, opacity 2s ease}
+#fog{position:absolute;inset:-20%;pointer-events:none;opacity:0;transition:opacity 2s}
+#fog i{position:absolute;border-radius:50%;background:radial-gradient(closest-side,rgba(235,238,240,.85),rgba(235,238,240,0));filter:blur(8px)}
+#fog i:nth-child(1){width:900px;height:380px;left:-10%;top:30%;animation:fogx 40s linear infinite}
+#fog i:nth-child(2){width:1100px;height:420px;left:20%;top:50%;animation:fogx 55s linear infinite reverse}
+#fog i:nth-child(3){width:800px;height:300px;left:0;top:5%;animation:fogx 70s linear infinite}
+@keyframes fogx{from{transform:translateX(-25%)}to{transform:translateX(25%)}}
+#glare{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 2s;
+  background:radial-gradient(circle at 82% 8%,rgba(255,240,200,.75),rgba(255,220,150,.25) 22%,rgba(255,220,150,0) 50%)}
+#wx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#reflect{position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(115deg,rgba(255,255,255,.07) 0%,rgba(255,255,255,0) 30%,rgba(255,255,255,0) 60%,rgba(255,255,255,.05) 75%,rgba(255,255,255,0) 85%)}
+#nightGlass{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 2s}
+#nightGlass b{position:absolute;width:60px;height:60px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,226,168,.55),rgba(255,226,168,0))}
+#interior{position:absolute;inset:0;pointer-events:none}
+#light{position:absolute;inset:0;pointer-events:none;transition:background 2s ease}
+#shaft{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 2s;
+  background:linear-gradient(160deg,rgba(255,226,170,.0) 10%,rgba(255,226,170,.16) 30%,rgba(255,226,170,0) 60%);
+  clip-path:polygon(8% 9%,63% 9%,98% 100%,32% 100%)}
+.steam path{animation:steam 5s ease-in-out infinite;opacity:0}
+.steam path:nth-child(2){animation-delay:1.6s}
+.steam path:nth-child(3){animation-delay:3.2s}
+@keyframes steam{0%{opacity:0;transform:translateY(8px)}30%{opacity:.55}100%{opacity:0;transform:translateY(-26px)}}
+body:not(.steamOn) .steam{display:none}
+.globe{transition:opacity 2s}
+#credit{position:absolute;left:138px;top:588px;font-size:11px;color:rgba(255,255,255,.75);text-shadow:0 1px 3px rgba(0,0,0,.6);pointer-events:none}
+
+/* ---------- UI layer ---------- */
+#ui{position:fixed;inset:0;pointer-events:none}
+#ui > *{pointer-events:auto}
+.glass{background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+#brand{position:absolute;top:24px;left:28px;display:flex;align-items:center;gap:10px;pointer-events:none;color:var(--brandInk,#2B231D)}
+#brand span{font-weight:600;letter-spacing:.08em;text-transform:uppercase;font-size:14px}
+#clock{font-variant-numeric:tabular-nums;opacity:.85;font-size:14px}
+
+#card{position:absolute;width:min(30vw,440px);min-width:300px;padding:26px 30px;border-radius:22px;display:flex;flex-direction:column;gap:10px;transition:opacity .4s, transform .4s}
+#card.pos-right{top:28px;right:28px}
+#card.pos-left{top:72px;left:28px}
+#card.pos-center{left:50%;top:46%;transform:translate(-50%,-50%);width:min(56vw,820px);align-items:center;text-align:center;padding:44px 56px;gap:14px}
+#card.hidden{opacity:0;pointer-events:none}
+#cardLabel{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+#cardTitle{margin:0;font-family:var(--serif);font-weight:400;font-style:italic;font-size:clamp(34px,3.4vw,52px);line-height:1.05}
+#card.pos-center #cardTitle{font-size:clamp(56px,6.5vw,110px)}
+#cardSteps{margin:2px 0 0;padding-left:24px;display:flex;flex-direction:column;gap:6px;font-size:clamp(17px,1.45vw,22px);line-height:1.35}
+#card.pos-center #cardSteps{list-style:none;padding:0;font-size:clamp(20px,1.9vw,30px)}
+#cardSteps:empty{display:none}
+.timerRow{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:8px;width:100%}
+#card.pos-center .timerRow{justify-content:center}
+#timeLeft{font-size:clamp(52px,5vw,80px);font-weight:700;line-height:1;font-variant-numeric:tabular-nums;color:var(--amber)}
+#timeNote{font-size:15px;color:var(--muted)}
+#bar{height:7px;border-radius:4px;background:rgba(246,241,233,.15);width:100%;overflow:hidden}
+#bar i{display:block;height:100%;width:0;background:var(--amber);border-radius:4px;transition:width .9s linear}
+#card.done{animation:pulse 1.2s ease-in-out 3}
+@keyframes pulse{50%{box-shadow:0 0 0 10px rgba(242,184,94,.35)}}
+#card.noTimer .timerRow,#card.noTimer #bar{display:none}
+
+#music{position:absolute;left:28px;bottom:28px;display:flex;align-items:center;gap:10px}
+#spotWrap{width:380px;height:80px;border-radius:14px;overflow:hidden;background:rgba(0,0,0,.35)}
+#spotWrap iframe{border:0;display:block}
+#music.collapsed #spotWrap{position:absolute;left:-9999px}
+#localPill{display:none;align-items:center;gap:14px;padding:10px 20px 10px 10px;border-radius:999px}
+#localPill .disc{width:48px;height:48px;border-radius:50%;background:radial-gradient(circle,var(--amber) 0 16%,#0b0807 17% 100%);box-shadow:inset 0 0 0 9px #0b0807,inset 0 0 0 10px #2a2220}
+body.playing #localPill .disc{animation:spin 3.6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#localPill b{display:block;font-size:16px;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#localPill small{color:var(--muted);font-size:13px}
+.iconBtn{width:44px;height:44px;border-radius:50%;border:0;background:transparent;color:var(--ink);display:inline-flex;align-items:center;justify-content:center}
+.iconBtn:hover{background:rgba(246,241,233,.1)}
+.iconBtn svg{width:20px;height:20px}
+
+#bar2{position:absolute;right:28px;bottom:28px;flex-wrap:wrap;justify-content:flex-end;max-width:calc(100vw - 480px);display:flex;align-items:center;gap:4px;padding:7px;border-radius:999px;transition:opacity .5s,transform .5s}
+#bar2 .sep{width:1px;height:26px;background:rgba(246,241,233,.2);margin:0 6px}
+.pill{height:44px;padding:0 16px;border-radius:999px;border:0;background:transparent;color:var(--ink);font-weight:600;font-size:15px;white-space:nowrap}
+.pill:hover{background:rgba(246,241,233,.1)}
+.pill.primary{background:var(--amber);color:var(--amber-ink)}
+.pill.primary:hover{background:#f6c77a}
+body.idle #bar2,body.idle #music .iconBtn{opacity:0;pointer-events:none}
+body.idle{cursor:none}
+#toast{position:absolute;left:50%;top:22px;transform:translate(-50%,-80px);padding:10px 18px;border-radius:999px;font-size:15px;transition:transform .4s;pointer-events:none}
+#toast.show{transform:translate(-50%,0)}
+
+/* ---------- settings drawer ---------- */
+#drawer{position:fixed;top:0;right:0;height:100%;width:min(460px,100vw);background:#1C1612;border-left:1px solid var(--line);transform:translateX(105%);transition:transform .35s ease;overflow-y:auto;z-index:20;padding:26px 26px 60px}
+#drawer.open{transform:none}
+#drawer h2{margin:0;font-family:var(--serif);font-weight:400;font-size:34px}
+#drawer h3{margin:28px 0 10px;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.drawerHead{display:flex;justify-content:space-between;align-items:center}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.tile{position:relative;height:72px;border-radius:10px;border:2px solid transparent;overflow:hidden;padding:0;background:#333}
+.tile img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.tile span{position:absolute;left:0;right:0;bottom:0;padding:14px 6px 5px;font-size:12px;font-weight:600;background:linear-gradient(transparent,rgba(0,0,0,.75));text-align:left}
+.tile[aria-pressed="true"]{border-color:var(--amber)}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{height:42px;padding:0 14px;border-radius:10px;border:1px solid rgba(246,241,233,.2);background:transparent;font-weight:600;font-size:14px}
+.seg button[aria-pressed="true"]{background:var(--amber);color:var(--amber-ink);border-color:var(--amber)}
+.row{display:flex;gap:8px;align-items:center;margin-top:8px}
+.field{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);flex:1}
+.field input,.field textarea,.field select{height:42px;padding:0 12px;border-radius:9px;border:1px solid rgba(246,241,233,.2);background:#120E0B;color:var(--ink);font-size:15px}
+.field textarea{height:auto;min-height:74px;padding:10px 12px;resize:vertical;line-height:1.4}
+.check{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;font-size:15px}
+.check input{width:22px;height:22px;accent-color:var(--amber)}
+.btn{height:42px;padding:0 16px;border-radius:10px;border:1px solid rgba(246,241,233,.2);background:transparent;font-weight:600;font-size:14px}
+.btn.primary{background:var(--amber);color:var(--amber-ink);border-color:var(--amber)}
+.btn.dashed{border-style:dashed;border-color:var(--amber);color:var(--amber)}
+.timerList{display:flex;flex-direction:column;gap:6px}
+.tItem{display:flex;align-items:center;gap:8px;padding:8px 8px 8px 12px;border-radius:10px;background:rgba(246,241,233,.05)}
+.tItem.active{background:rgba(242,184,94,.16)}
+.tItem .nm{flex:1;min-width:0}
+.tItem .nm b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tItem .nm small{color:var(--muted)}
+.tItem .btn{height:36px;padding:0 10px}
+.editor{display:none;flex-direction:column;gap:8px;padding:12px;border-radius:12px;background:rgba(246,241,233,.06);margin-top:8px}
+.editor.open{display:flex}
+.hint{font-size:13px;color:var(--muted);line-height:1.45;margin:6px 0 0}
+.hint a{color:var(--amber)}
+#trackList{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:2px;max-height:180px;overflow:auto}
+#trackList li{display:flex;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:8px;font-size:14px;cursor:pointer}
+#trackList li.now{background:rgba(242,184,94,.16);color:#f5c77e;font-weight:600}
+kbd{font:600 12px var(--font);padding:2px 6px;border-radius:5px;border:1px solid rgba(246,241,233,.3)}
+#scrim{position:fixed;inset:0;z-index:19;display:none}
+#drawer.open + #scrim{display:block}
+@media (max-width:1100px){#bar2{max-width:calc(100vw - 56px);bottom:120px}} @media (max-width:900px){#card.pos-right,#card.pos-left{width:calc(100vw - 56px)} #spotWrap{width:300px}}
+</style>
+</head>
+<body class="steamOn drift">
+
+<div id="sceneWrap" aria-hidden="true">
+  <div id="scene">
+    <div id="view">
+      <div class="fallback" id="fallback"></div>
+      <img id="photo" alt="" referrerpolicy="no-referrer">
+      <div id="tint"></div>
+      <div id="fog"><i></i><i></i><i></i></div>
+      <div id="glare"></div>
+      <canvas id="wx" width="1320" height="795"></canvas>
+      <div id="nightGlass"><b style="left:600px;top:40px"></b><b style="left:740px;top:70px"></b><b style="left:820px;top:30px"></b></div>
+      <div id="reflect"></div>
+    </div>
+    <div id="credit"></div>
+
+    <svg id="interior" viewBox="0 0 1600 900" width="1600" height="900">
+      <defs>
+        <linearGradient id="oak" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E2C09A"/><stop offset="1" stop-color="#B98C62"/></linearGradient>
+        <radialGradient id="globeGlow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FFE2A8" stop-opacity=".9"/><stop offset="1" stop-color="#FFE2A8" stop-opacity="0"/></radialGradient>
+        <linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E4E6E8"/><stop offset="1" stop-color="#B9BEC2"/></linearGradient>
+        <filter id="soft"><feGaussianBlur stdDeviation="2.5"/></filter>
+      </defs>
+      <!-- wall with window hole -->
+      <path fill-rule="evenodd" style="fill:var(--wall)" d="M0 0H1600V900H0Z M130 80H1010V610H130Z"/>
+      <rect x="1040" y="0" width="560" height="900" style="fill:var(--wall2)" opacity=".55"/>
+      <!-- window frame -->
+      <g fill="none" stroke="#141210" stroke-width="8">
+        <rect x="130" y="80" width="880" height="530"/>
+        <line x1="423" y1="80" x2="423" y2="610"/><line x1="717" y1="80" x2="717" y2="610"/>
+        <line x1="130" y1="250" x2="1010" y2="250"/>
+      </g>
+      <rect x="110" y="606" width="920" height="14" fill="#CFC5B6"/>
+      <rect x="110" y="618" width="920" height="6" fill="#000" opacity=".12"/>
+      <!-- pendant globes -->
+      <g id="globes">
+        <g class="globe"><ellipse class="halo" cx="1130" cy="190" rx="210" ry="180" fill="url(#globeGlow)"/></g>
+        <g class="globe"><ellipse class="halo" cx="1300" cy="240" rx="210" ry="180" fill="url(#globeGlow)"/></g>
+        <g class="globe"><ellipse class="halo" cx="1470" cy="170" rx="210" ry="180" fill="url(#globeGlow)"/></g>
+        <line x1="1130" y1="0" x2="1130" y2="160" stroke="#141210" stroke-width="2"/>
+        <line x1="1300" y1="0" x2="1300" y2="210" stroke="#141210" stroke-width="2"/>
+        <line x1="1470" y1="0" x2="1470" y2="140" stroke="#141210" stroke-width="2"/>
+        <circle cx="1130" cy="188" r="28" fill="#FFF1D2"/><circle cx="1300" cy="238" r="28" fill="#FFF1D2"/><circle cx="1470" cy="168" r="28" fill="#FFF1D2"/>
+      </g>
+      <!-- shelf -->
+      <rect x="1070" y="330" width="400" height="9" fill="#B98C62"/>
+      <g>
+        <path d="M1086 290h36l-4 40h-28z" fill="#E9E4DC"/><path d="M1138 290h36l-4 40h-28z" fill="#C96F4A"/>
+        <path d="M1190 290h36l-4 40h-28z" fill="#3F5C4D"/><path d="M1242 290h36l-4 40h-28z" fill="#E9E4DC"/>
+        <path d="M1294 290h36l-4 40h-28z" fill="#D8B26A"/><path d="M1346 290h36l-4 40h-28z" fill="#2C3A44"/>
+        <rect x="1398" y="276" width="56" height="54" rx="4" fill="#C9B79C"/>
+        <path d="M1418 276c-18-30 6-52 20-40 14-16 34 12 18 40z" fill="#4E7356"/>
+      </g>
+      <!-- letter board -->
+      <g transform="translate(1150,380) scale(.9)">
+        <rect x="0" y="0" width="300" height="190" rx="8" fill="#1E1B19"/>
+        <rect x="10" y="10" width="280" height="170" rx="4" fill="#26221F"/>
+        <g fill="#000" opacity=".25">
+          <rect x="10" y="40" width="280" height="1"/><rect x="10" y="70" width="280" height="1"/><rect x="10" y="100" width="280" height="1"/><rect x="10" y="130" width="280" height="1"/><rect x="10" y="160" width="280" height="1"/>
+        </g>
+        <text x="150" y="48" text-anchor="middle" font-family="Bricolage Grotesque, sans-serif" font-weight="700" font-size="20" letter-spacing="4" fill="#F4EFE6">CORNER CAFÉ</text>
+        <text x="150" y="88" text-anchor="middle" font-family="Bricolage Grotesque, sans-serif" font-weight="600" font-size="15" letter-spacing="2" fill="#F2B85E">TODAY</text>
+        <text id="boardLine1" x="150" y="122" text-anchor="middle" font-family="Bricolage Grotesque, sans-serif" font-weight="600" font-size="19" letter-spacing="2" fill="#F4EFE6"></text>
+        <text id="boardLine2" x="150" y="152" text-anchor="middle" font-family="Bricolage Grotesque, sans-serif" font-weight="600" font-size="15" letter-spacing="2" fill="#CFC6B8"></text>
+      </g>
+      <!-- counter -->
+      <rect x="0" y="742" width="1600" height="158" style="fill:var(--tile)"/>
+      <g stroke="#000" stroke-opacity=".18" stroke-width="2" id="flutes"></g>
+      <rect x="0" y="720" width="1600" height="28" fill="url(#oak)"/>
+      <rect x="0" y="746" width="1600" height="4" fill="#000" opacity=".18"/>
+      <!-- espresso machine -->
+      <g transform="translate(1060,560)">
+        <rect x="0" y="0" width="280" height="160" rx="12" fill="url(#chrome)"/>
+        <rect x="0" y="0" width="280" height="28" rx="12" fill="#AEB3B7"/>
+        <rect x="16" y="42" width="248" height="52" rx="6" fill="#2A2C2E"/>
+        <circle cx="80" cy="68" r="13" fill="#C9CCCF"/><circle cx="200" cy="68" r="13" fill="#C9CCCF"/>
+        <circle cx="140" cy="68" r="6" fill="#F2B85E"/>
+        <rect x="64" y="100" width="32" height="20" rx="3" fill="#2A2C2E"/><rect x="184" y="100" width="32" height="20" rx="3" fill="#2A2C2E"/>
+        <path d="M68 124h24l-3 24h-18z" fill="#F6F1E9"/>
+        <rect x="0" y="150" width="280" height="10" fill="#9EA3A7"/>
+      </g>
+      <g class="steam" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" filter="url(#soft)">
+        <path d="M1140 676c-12-22 12-30 0-54"/><path d="M1150 676c-12-22 12-30 0-54"/><path d="M1132 676c-12-22 12-30 0-54"/>
+      </g>
+      <!-- cups on counter -->
+      <g transform="translate(600,650)">
+        <path d="M0 18h64l-5 46c-1 8-7 12-15 12H20c-8 0-14-4-15-12z" fill="#F6F1E9"/>
+        <path d="M64 30c24 0 24 30-4 30" fill="none" stroke="#F6F1E9" stroke-width="8"/>
+        <ellipse cx="32" cy="20" rx="32" ry="5" fill="#5A3A24"/>
+        <ellipse cx="32" cy="72" rx="52" ry="6" fill="#000" opacity=".15"/>
+      </g>
+      <g class="steam" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" filter="url(#soft)">
+        <path d="M624 660c-12-22 12-30 0-56"/><path d="M640 660c-12-22 12-30 0-56"/><path d="M612 660c-12-22 12-30 0-56"/>
+      </g>
+      <g transform="translate(250,670)">
+        <path d="M0 10h44l-4 40H4z" fill="#C96F4A"/><ellipse cx="22" cy="54" rx="34" ry="5" fill="#000" opacity=".15"/>
+      </g>
+      <!-- plant -->
+      <g transform="translate(1440,470)">
+        <path d="M14 194h88l-10 56H24z" fill="#C96F4A"/>
+        <path d="M58 194C14 150-16 108-6 56c32 42 54 86 64 138z" fill="#3E6B4A"/>
+        <path d="M58 194c10-62 32-114 74-156-6 64-32 116-74 156z" fill="#4E7F58"/>
+        <path d="M58 194c-10-72 0-132 22-194 16 62 0 132-22 194z" fill="#355E40"/>
+      </g>
+      <!-- hanging plant left -->
+      <g transform="translate(40,0)">
+        <line x1="30" y1="0" x2="30" y2="110" stroke="#141210" stroke-width="2"/>
+        <path d="M6 110h48l-6 30H12z" fill="#E9E4DC"/>
+        <path d="M14 136c-6 40 4 70-4 110M30 140c4 50-6 80 2 130M46 136c8 36-2 60 6 96" stroke="#4E7F58" stroke-width="5" fill="none" stroke-linecap="round"/>
+        <g fill="#4E7F58"><ellipse cx="12" cy="180" rx="9" ry="6"/><ellipse cx="32" cy="210" rx="9" ry="6"/><ellipse cx="50" cy="190" rx="9" ry="6"/><ellipse cx="10" cy="236" rx="9" ry="6"/><ellipse cx="34" cy="260" rx="9" ry="6"/></g>
+      </g>
+    </svg>
+    <div id="shaft"></div>
+    <div id="light"></div>
+  </div>
+</div>
+
+<div id="ui">
+  <div id="brand">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F2B85E" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 11h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 3c0 1.5 1.5 1.5 1.5 3M12 3c0 1.5 1.5 1.5 1.5 3"/></svg>
+    <span>Corner Café</span><span id="clock"></span>
+  </div>
+
+  <section id="card" class="glass pos-right" aria-live="polite">
+    <span id="cardLabel"></span>
+    <h1 id="cardTitle"></h1>
+    <ol id="cardSteps"></ol>
+    <div class="timerRow"><span id="timeLeft">00:00</span><span id="timeNote"></span></div>
+    <div id="bar"><i></i></div>
+  </section>
+
+  <div id="music">
+    <div id="spotWrap"><div id="spotEmbed"></div></div>
+    <div id="localPill" class="glass"><span class="disc"></span><div><b id="trackName">No song yet</b><small id="trackMeta">Add songs in settings</small></div>
+      <button class="iconBtn" id="lpPrev" aria-label="Previous song"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 5 9 12l10 7zM5 5v14"/></svg></button>
+      <button class="iconBtn" id="lpPlay" aria-label="Play or pause music"><svg viewBox="0 0 24 24" fill="currentColor"><path id="lpIcon" d="M7 5v14l12-7z"/></svg></button>
+      <button class="iconBtn" id="lpNext" aria-label="Next song"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m5 5 10 7-10 7zM19 5v14"/></svg></button>
+    </div>
+    <button class="iconBtn glass" id="hideMusic" aria-label="Hide or show the music player"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></button>
+  </div>
+
+  <div id="bar2" class="glass">
+    <button class="pill primary" id="startBtn">Start timer</button>
+    <button class="pill" id="plusBtn" title="Add one minute">+1 min</button>
+    <button class="pill" id="resetBtn">Reset</button>
+    <span class="sep"></span>
+    <button class="pill" id="nextView" title="Next window view">View: <span id="viewName"></span></button>
+    <button class="pill" id="todBtn" title="Time of day">Time: <span id="todName"></span></button>
+    <button class="pill" id="wxBtn" title="Weather outside">Outside: <span id="wxName"></span></button>
+    <span class="sep"></span>
+    <button class="iconBtn" id="fsBtn" aria-label="Full screen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    <button class="iconBtn" id="setBtn" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
+  </div>
+  <div id="toast" class="glass"></div>
+</div>
+
+<aside id="drawer" aria-label="Settings">
+  <div class="drawerHead"><h2>Set up the café</h2><button class="iconBtn" id="closeDrawer" aria-label="Close settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+
+  <h3>Out the window</h3>
+  <div class="grid" id="viewGrid"></div>
+  <div class="row"><button class="btn" id="shufflePhoto">Another photo of this place</button></div>
+  <div class="row">
+    <label class="field">Or paste a photo link
+      <input id="customUrl" type="url" placeholder="https://images.pexels.com/…">
+    </label>
+    <button class="btn" id="useUrl" style="align-self:flex-end">Use</button>
+  </div>
+  <div class="row">
+    <label class="btn" style="display:inline-flex;align-items:center">Use a photo from this computer<input id="customFile" type="file" accept="image/*" class="sr"></label>
+  </div>
+
+  <h3>Time of day</h3>
+  <div class="seg" id="todSeg"></div>
+
+  <h3>Outside</h3>
+  <div class="seg" id="wxSeg"></div>
+  <label class="check">Rain sounds when it rains<input type="checkbox" id="rainSound"></label>
+
+  <h3>Little touches</h3>
+  <label class="check">Coffee steam<input type="checkbox" id="optSteam" checked></label>
+  <label class="check">Slow camera drift outside<input type="checkbox" id="optDrift" checked></label>
+  <label class="check">Hide controls when the mouse is still<input type="checkbox" id="optIdle" checked></label>
+
+  <h3>Class timers</h3>
+  <div class="timerList" id="timerList"></div>
+  <div class="row"><button class="btn dashed" id="addTimer">+ Add timer</button></div>
+  <div class="editor" id="editor">
+    <label class="field">What students do<input id="edName" maxlength="60"></label>
+    <div class="row" style="margin:0">
+      <label class="field">Minutes<input id="edMin" type="number" min="0" max="180" step="0.5"></label>
+      <label class="field">Card style<select id="edStyle"><option value="right">Card on the right</option><option value="left">Card on the left</option><option value="center">Big and centered</option></select></label>
+    </div>
+    <label class="field">Steps (one per line, optional)<textarea id="edSteps"></textarea></label>
+    <div class="row" style="margin:0"><button class="btn primary" id="edSave">Save timer</button><button class="btn" id="edCancel">Cancel</button><button class="btn" id="edDelete" style="margin-left:auto">Delete</button></div>
+    <p class="hint">Set minutes to 0 to show the card with no countdown.</p>
+  </div>
+
+  <h3>The card</h3>
+  <label class="field">Class name (shows on the card and the café sign)<input id="classLabel" maxlength="40" placeholder="Period 3 · English 9"></label>
+  <label class="check">Show the card<input type="checkbox" id="optCard" checked></label>
+  <label class="check">Ring a soft bell when time is up<input type="checkbox" id="optBell" checked></label>
+  <label class="check">Stop the music when time is up<input type="checkbox" id="optStopMusic" checked></label>
+
+  <h3>Music</h3>
+  <div class="seg" id="srcSeg"></div>
+  <div id="srcSpotify">
+    <label class="field" style="margin-top:10px">Spotify playlist, album or song link
+      <input id="spotUrl" placeholder="https://open.spotify.com/playlist/…">
+    </label>
+    <div class="row"><button class="btn primary" id="spotLoad">Load</button></div>
+    <p class="hint">Press play <em>inside</em> the Spotify player. Full songs play in Chrome on a computer when you're signed in to Spotify Premium in this browser; otherwise Spotify plays 30-second previews. When time is up, Spotify pauses (it can't fade).</p>
+  </div>
+  <div id="srcFiles" style="display:none">
+    <div class="row"><label class="btn primary" style="display:inline-flex;align-items:center">Add MP3 / M4A files<input id="audioFiles" type="file" accept="audio/*" multiple class="sr"></label><label class="check" style="padding:0;gap:8px">Shuffle<input type="checkbox" id="optShuffle"></label></div>
+    <ul id="trackList"></ul>
+    <label class="field" style="margin-top:10px">Volume<input id="vol" type="range" min="0" max="1" step="0.01" value="0.7" style="height:30px;padding:0"></label>
+    <p class="hint">Your songs stay on this computer and fade out gently when time is up. You'll need to add them again after closing the page.</p>
+  </div>
+
+  <h3>Shortcuts</h3>
+  <p class="hint"><kbd>Space</kbd> start / pause timer · <kbd>F</kbd> full screen · <kbd>S</kbd> settings · <kbd>→</kbd> next view · <kbd>N</kbd> next timer</p>
+  <p class="hint">Window photos from <a href="https://www.pexels.com" target="_blank" rel="noopener">Pexels</a> (free to use). Settings save in this browser.</p>
+</aside>
+<div id="scrim"></div>
+
+<script>
+(() => {
+'use strict';
+const $ = s => document.querySelector(s);
+const PX = (id, w=1920) => `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=${w}`;
+
+/* ---------- data ---------- */
+const VIEWS = [
+  {key:'urban', name:'Urban', fb:['#9fb3c4','#6f7a84','#3b3f44'], photos:[[378570,'Nout Gons'],[30128600,'Clément Proust'],[11762890,'Following NYC']]},
+  {key:'modern', name:'Modern city', fb:['#a9c6dd','#7f97aa','#45525e'], photos:[[310457,'Dom J'],[5517045,'Tony Mucci'],[7673904,'Jakob Jin']]},
+  {key:'castle', name:'Castle', fb:['#b9d0e2','#7d9a6b','#4b5e3e'], photos:[[547494,'Kai Pilger'],[2832083,'Felix Mittermeier'],[170440,'Paula']]},
+  {key:'country', name:'Country', fb:['#c4dbef','#8fb070','#5c7a44'], photos:[[30075079,'Thomas P'],[30400456,'Michel Avril'],[37410126,'Clinton Weaver']]},
+  {key:'village', name:'Village', fb:['#c9d8e6','#c8a98a','#7b5d46'], photos:[[754339,'Irina Iriser'],[11647950,'David Waschbüsch'],[12102158,'Vish Pix']]},
+  {key:'beach', name:'Beach', fb:['#9fd3ec','#5fb7c7','#e8d6ae'], photos:[[29773805,'Davide Robetti'],[4604439,''],[13708932,'Cristian Sarchy']]},
+  {key:'mountains', name:'Mountains', fb:['#bcd3e8','#8aa1b5','#58704f'], photos:[[28198499,''],[1679815,''],[30732590,'Lorenza Magnaghi']]},
+];
+const TODS = [{k:'morning',n:'Morning'},{k:'noon',n:'Noon'},{k:'night',n:'Night'},{k:'auto',n:'Follow the clock'}];
+const WXS = [{k:'clear',n:'Clear'},{k:'sun',n:'Sun'},{k:'rain',n:'Rain'},{k:'snow',n:'Snow'},{k:'fog',n:'Fog'}];
+const SRCS = [{k:'spotify',n:'Spotify'},{k:'files',n:'My files'},{k:'none',n:'No music'}];
+const DEFAULT_TIMERS = [
+  {id:'t1',name:'Welcome in',min:2,style:'center',steps:['Phones in the caddy','Journals out']},
+  {id:'t2',name:'Do now',min:5,style:'left',steps:['Grab your notebook','Answer the question on the board']},
+  {id:'t3',name:'Silent reading',min:20,style:'right',steps:[]},
+  {id:'t4',name:'Work time',min:20,style:'right',steps:['Work on today’s task','Ask three before me']},
+  {id:'t5',name:'Clean up',min:3,style:'center',steps:['Materials away','Push in your chair']},
+];
+
+/* ---------- state ---------- */
+const store = {
+  get(){ try{ return JSON.parse(localStorage.getItem('cornerCafe')||'{}'); }catch(e){ return {}; } },
+  set(v){ try{ localStorage.setItem('cornerCafe', JSON.stringify(v)); }catch(e){} }
+};
+const saved = store.get();
+const S = Object.assign({
+  view:'urban', photoIdx:0, customUrl:'', tod:'auto', wx:'rain', rainSound:false,
+  steam:true, drift:true, idle:true, card:true, bell:true, stopMusic:true,
+  classLabel:'', timers:DEFAULT_TIMERS, activeTimer:'t3', src:'spotify', spotUrl:'', shuffle:false, vol:0.7
+}, saved);
+if(!Array.isArray(S.timers) || !S.timers.length) S.timers = DEFAULT_TIMERS.slice();
+const save = () => store.set(S);
+
+/* ---------- scene scaling (cover) ---------- */
+const scene = $('#scene');
+function fit(){
+  const k = Math.max(innerWidth/1600, innerHeight/900);
+  scene.style.transform = `translate(-50%,-50%) scale(${k})`;
+}
+addEventListener('resize', fit); fit();
+
+/* flutes on counter */
+(() => { const g = $('#flutes'); let h=''; for(let x=12;x<1600;x+=22) h+=`<line x1="${x}" y1="760" x2="${x}" y2="900"/>`; g.innerHTML=h; })();
+
+/* ---------- photos ---------- */
+const photo = $('#photo');
+let customObjUrl = '';
+function currentView(){ return VIEWS.find(v=>v.key===S.view) || VIEWS[0]; }
+function setFallback(v){
+  const [a,b,c] = v.fb;
+  $('#fallback').style.background = `linear-gradient(180deg, ${a} 0%, ${a} 45%, ${b} 46%, ${b} 70%, ${c} 71%, ${c} 100%)`;
+}
+function loadPhoto(){
+  const v = currentView();
+  setFallback(v);
+  photo.classList.remove('on');
+  const credit = $('#credit');
+  let srcs;
+  if(S.view==='custom'){
+    srcs = [customObjUrl || S.customUrl].filter(Boolean);
+    credit.textContent = '';
+  } else {
+    const order = v.photos.map((p,i)=>v.photos[(i+S.photoIdx)%v.photos.length]);
+    srcs = order.map(p=>({u:PX(p[0]), c:p[1]}));
+  }
+  let i = 0;
+  const tryNext = () => {
+    if(i >= srcs.length){ photo.removeAttribute('src'); credit.textContent=''; return; }
+    const s = srcs[i++];
+    const url = typeof s === 'string' ? s : s.u;
+    photo.onload = () => { photo.classList.add('on'); credit.textContent = (typeof s==='object') ? `Photo${s.c?': '+s.c:''} · Pexels` : ''; };
+    photo.onerror = tryNext;
+    photo.src = url;
+  };
+  tryNext();
+  $('#viewName').textContent = S.view==='custom' ? 'Your photo' : v.name;
+  renderViewGrid();
+}
+
+/* ---------- time of day ---------- */
+const TOD_LOOK = {
+  morning:{wall:'#EFE4D6',wall2:'#E2D3C0',tile:'#46634F',glow:.25,
+    tint:'linear-gradient(180deg,rgba(255,200,160,.28),rgba(255,230,200,.10))', tintBlend:'soft-light', filter:'brightness(1.04) saturate(.95) sepia(.12)',
+    light:'linear-gradient(180deg,rgba(255,214,170,.10),rgba(255,214,170,0) 50%), radial-gradient(ellipse at 35% 40%,rgba(255,220,180,.16),rgba(0,0,0,0) 60%)'},
+  noon:{wall:'#F1ECE4',wall2:'#E2DACE',tile:'#3F5C4D',glow:.12,
+    tint:'linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,0))', tintBlend:'normal', filter:'brightness(1.03) saturate(1.02)',
+    light:'radial-gradient(ellipse at 35% 40%,rgba(255,255,255,.06),rgba(0,0,0,0) 60%)'},
+  night:{wall:'#3A322B',wall2:'#2B241F',tile:'#2C4237',glow:.85,
+    tint:'linear-gradient(180deg,rgba(10,20,60,.65),rgba(20,25,60,.45))', tintBlend:'multiply', filter:'brightness(.42) saturate(.65) contrast(1.1) hue-rotate(-8deg)',
+    light:'radial-gradient(ellipse at 82% 22%,rgba(255,200,120,.18),rgba(0,0,0,0) 45%), radial-gradient(ellipse at 50% 50%,rgba(0,0,0,0) 40%,rgba(0,0,0,.45) 100%)'}
+};
+function effectiveTod(){
+  if(S.tod!=='auto') return S.tod;
+  const h = new Date().getHours();
+  return h < 11 ? 'morning' : h < 16 ? 'noon' : 'night';
+}
+function applyLook(){
+  const t = effectiveTod(), L = TOD_LOOK[t], r = document.documentElement.style;
+  r.setProperty('--wall',L.wall); r.setProperty('--wall2',L.wall2); r.setProperty('--tile',L.tile); r.setProperty('--brandInk', t==='night' ? '#F6F1E9' : '#2B231D');
+  document.querySelectorAll('.globe').forEach(g=>g.style.opacity=L.glow);
+  const tint = $('#tint'); tint.style.background = L.tint; tint.style.mixBlendMode = L.tintBlend;
+  $('#light').style.background = L.light;
+  $('#nightGlass').style.opacity = t==='night' ? 1 : 0;
+  // weather adjusts the outside photo
+  let f = L.filter;
+  if(S.wx==='rain') f += ' saturate(.7) brightness(.86) contrast(.95)';
+  if(S.wx==='fog') f += ' contrast(.78) brightness(1.06) blur(1.2px) saturate(.75)';
+  if(S.wx==='snow') f += ' saturate(.8) brightness(1.05) hue-rotate(5deg)';
+  if(S.wx==='sun' && t!=='night') f += ' brightness(1.08) saturate(1.1)';
+  photo.style.filter = f;
+  $('#fog').style.opacity = S.wx==='fog' ? (t==='night'?.45:.9) : 0;
+  $('#glare').style.opacity = (S.wx==='sun' && t!=='night') ? 1 : 0;
+  $('#shaft').style.opacity = (S.wx==='sun' && t!=='night') ? 1 : 0;
+  $('#todName').textContent = (TODS.find(x=>x.k===S.tod)||TODS[3]).n.replace('Follow the clock','Auto');
+  $('#wxName').textContent = (WXS.find(x=>x.k===S.wx)||WXS[0]).n;
+  wxSetup();
+  rainAudio();
+  renderSeg('#todSeg', TODS, S.tod, k=>{S.tod=k; save(); applyLook();});
+  renderSeg('#wxSeg', WXS, S.wx, k=>{S.wx=k; save(); applyLook();});
+}
+setInterval(()=>{ if(S.tod==='auto') applyLook(); }, 5*60*1000);
+
+/* ---------- weather canvas ---------- */
+const cv = $('#wx'), ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height; // 1.5x of 880x530
+let parts = [], drops = [], raf = 0;
+const rnd = (a,b) => a + Math.random()*(b-a);
+function wxSetup(){
+  parts = []; drops = [];
+  if(S.wx==='rain'){
+    for(let i=0;i<170;i++) parts.push({x:rnd(0,W),y:rnd(0,H),l:rnd(18,40),v:rnd(18,30)});
+    for(let i=0;i<70;i++) drops.push({x:rnd(0,W),y:rnd(0,H),r:rnd(2,6),v:Math.random()<.25?rnd(.3,1.4):0});
+  } else if(S.wx==='snow'){
+    for(let i=0;i<220;i++) parts.push({x:rnd(0,W),y:rnd(0,H),r:rnd(1.2,4.2),v:rnd(.6,2),p:rnd(0,6.28)});
+  } else if(S.wx==='sun' || S.wx==='clear'){
+    const n = S.wx==='sun' ? 45 : 0;
+    for(let i=0;i<n;i++) parts.push({x:rnd(0,W),y:rnd(0,H),r:rnd(1,3),vx:rnd(-.15,.15),vy:rnd(-.2,.05),p:rnd(0,6.28)});
+  }
+  if(!raf) raf = requestAnimationFrame(tick);
+}
+function tick(){
+  raf = requestAnimationFrame(tick);
+  ctx.clearRect(0,0,W,H);
+  if(S.wx==='rain'){
+    ctx.strokeStyle='rgba(225,235,242,.45)'; ctx.lineWidth=1.6; ctx.lineCap='round'; ctx.beginPath();
+    for(const p of parts){ p.y+=p.v; p.x-=p.v*.12; if(p.y>H){p.y=-p.l; p.x=rnd(0,W+60);} ctx.moveTo(p.x,p.y); ctx.lineTo(p.x+p.l*.12,p.y-p.l); }
+    ctx.stroke();
+    for(const d of drops){
+      if(d.v){ d.y+=d.v; if(d.y>H+10){d.y=-10; d.x=rnd(0,W);} }
+      ctx.beginPath(); ctx.arc(d.x,d.y,d.r,0,6.28);
+      ctx.fillStyle='rgba(255,255,255,.18)'; ctx.fill();
+      ctx.beginPath(); ctx.arc(d.x-d.r*.3,d.y-d.r*.35,d.r*.35,0,6.28); ctx.fillStyle='rgba(255,255,255,.55)'; ctx.fill();
+      if(d.v){ ctx.fillStyle='rgba(255,255,255,.08)'; ctx.fillRect(d.x-d.r*.4,d.y-40,d.r*.8,40); }
+    }
+  } else if(S.wx==='snow'){
+    ctx.fillStyle='rgba(255,255,255,.9)';
+    for(const p of parts){ p.y+=p.v; p.p+=.01; p.x+=Math.sin(p.p)*.6; if(p.y>H){p.y=-5;p.x=rnd(0,W);} ctx.globalAlpha = .5 + p.r/9; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.28); ctx.fill(); }
+    ctx.globalAlpha=1;
+    // snow building up on the sill
+    ctx.fillStyle='rgba(250,252,255,.92)'; ctx.beginPath(); ctx.moveTo(0,H); for(let x=0;x<=W;x+=60) ctx.lineTo(x,H-14-Math.sin(x*.02)*6); ctx.lineTo(W,H); ctx.fill();
+  } else if(S.wx==='sun'){
+    for(const p of parts){ p.x+=p.vx; p.y+=p.vy; p.p+=.02; if(p.y<0)p.y=H; if(p.x<0)p.x=W; if(p.x>W)p.x=0;
+      ctx.globalAlpha=.25+.25*Math.sin(p.p); ctx.fillStyle='#fff6dc'; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.28); ctx.fill(); }
+    ctx.globalAlpha=1;
+  } else { cancelAnimationFrame(raf); raf=0; }
+}
+
+/* ---------- rain sound (generated) ---------- */
+let AC = null, rainNode = null;
+function audioCtx(){ if(!AC){ try{ AC = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC && AC.state==='suspended') AC.resume(); return AC; }
+function rainAudio(){
+  const want = S.rainSound && S.wx==='rain';
+  if(want && !rainNode){
+    const ac = audioCtx(); if(!ac) return;
+    const len = ac.sampleRate*2, buf = ac.createBuffer(1,len,ac.sampleRate), d = buf.getChannelData(0);
+    let b0=0,b1=0,b2=0; for(let i=0;i<len;i++){ const w=Math.random()*2-1; b0=.99765*b0+w*.099; b1=.963*b1+w*.2965; b2=.57*b2+w*1.0526; d[i]=(b0+b1+b2+w*.1848)*.12; }
+    const src = ac.createBufferSource(); src.buffer=buf; src.loop=true;
+    const lp = ac.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=2400;
+    const g = ac.createGain(); g.gain.value=0; g.gain.linearRampToValueAtTime(.35, ac.currentTime+2);
+    src.connect(lp).connect(g).connect(ac.destination); src.start();
+    rainNode = {src,g};
+  } else if(!want && rainNode){
+    const {src,g} = rainNode; rainNode=null;
+    g.gain.linearRampToValueAtTime(0, AC.currentTime+1.2); setTimeout(()=>src.stop(),1400);
+  }
+}
+function bell(){
+  const ac = audioCtx(); if(!ac) return;
+  const t0 = ac.currentTime;
+  [[880,0],[1318.5,.0],[659.25,.9],[987.77,.9]].forEach(([f,dt])=>{
+    const o=ac.createOscillator(), g=ac.createGain(); o.type='sine'; o.frequency.value=f;
+    g.gain.setValueAtTime(0,t0+dt); g.gain.linearRampToValueAtTime(.18,t0+dt+.02); g.gain.exponentialRampToValueAtTime(.0001,t0+dt+2.6);
+    o.connect(g).connect(ac.destination); o.start(t0+dt); o.stop(t0+dt+2.7);
+  });
+}
+
+/* ---------- timers + card ---------- */
+let remaining = 0, total = 0, running = false, endAt = 0, tickT = 0;
+const activeTimer = () => S.timers.find(t=>t.id===S.activeTimer) || S.timers[0];
+const fmt = s => { s=Math.max(0,Math.ceil(s)); const m=Math.floor(s/60), r=s%60; return (m<10?'0':'')+m+':'+(r<10?'0':'')+r; };
+function renderCard(){
+  const t = activeTimer(), card = $('#card');
+  card.className = 'glass pos-' + (t.style||'right') + (S.card?'':' hidden') + (t.min>0?'':' noTimer');
+  $('#cardLabel').textContent = S.classLabel || 'Right now';
+  $('#cardTitle').textContent = t.name;
+  $('#cardSteps').innerHTML = '';
+  (t.steps||[]).filter(Boolean).forEach(s=>{ const li=document.createElement('li'); li.textContent=s; $('#cardSteps').appendChild(li); });
+  updateTime();
+  $('#boardLine1').textContent = (S.classLabel || 'Good to see you').toUpperCase().slice(0,20);
+  $('#boardLine2').textContent = t.name.toUpperCase().slice(0,26);
+}
+function updateTime(){
+  if(running) remaining = (endAt - Date.now())/1000;
+  $('#timeLeft').textContent = fmt(remaining);
+  const pct = total>0 ? (1 - remaining/total)*100 : 0;
+  $('#bar i').style.width = Math.min(100,Math.max(0,pct)) + '%';
+  $('#timeNote').textContent = running ? 'left' : (remaining<=0 && total>0 ? 'Time’s up' : (remaining<total ? 'paused' : 'ready'));
+  $('#startBtn').textContent = running ? 'Pause' : (remaining<total && remaining>0 ? 'Resume' : 'Start timer');
+}
+function loadTimer(id){
+  S.activeTimer = id; save();
+  stopTimer(); const t = activeTimer();
+  total = remaining = Math.round((+t.min||0)*60);
+  $('#card').classList.remove('done');
+  renderCard(); renderTimerList();
+}
+function startTimer(){
+  if(total<=0) return;
+  if(remaining<=0) remaining = total;
+  running = true; endAt = Date.now() + remaining*1000;
+  $('#card').classList.remove('done');
+  clearInterval(tickT); tickT = setInterval(()=>{ updateTime(); if(remaining<=0) timeUp(); }, 250);
+  updateTime();
+}
+function stopTimer(){ running=false; clearInterval(tickT); updateTime(); }
+function timeUp(){
+  stopTimer(); remaining = 0; updateTime();
+  $('#card').classList.add('done');
+  if(S.bell) bell();
+  if(S.stopMusic) stopMusic();
+  toast('Time’s up');
+}
+$('#startBtn').onclick = () => { audioCtx(); running ? stopTimer() : startTimer(); };
+$('#plusBtn').onclick = () => { if(running) endAt += 60000; else { remaining += 60; if(remaining>total) total = remaining; } updateTime(); };
+$('#resetBtn').onclick = () => loadTimer(S.activeTimer);
+
+/* timer list + editor */
+let editing = null;
+function renderTimerList(){
+  const box = $('#timerList'); box.innerHTML='';
+  S.timers.forEach(t=>{
+    const d = document.createElement('div'); d.className='tItem'+(t.id===S.activeTimer?' active':'');
+    d.innerHTML = `<div class="nm"><b></b><small></small></div><button class="btn primary">Show</button><button class="btn">Edit</button>`;
+    d.querySelector('b').textContent = t.name;
+    d.querySelector('small').textContent = (t.min>0? t.min+' min':'no timer') + ' · ' + ({right:'card right',left:'card left',center:'big centered'}[t.style||'right']);
+    const [show, edit] = d.querySelectorAll('button');
+    show.onclick = () => { loadTimer(t.id); };
+    edit.onclick = () => openEditor(t);
+    box.appendChild(d);
+  });
+}
+function openEditor(t){
+  editing = t ? t.id : null;
+  $('#edName').value = t ? t.name : '';
+  $('#edMin').value = t ? t.min : 10;
+  $('#edStyle').value = t ? (t.style||'right') : 'right';
+  $('#edSteps').value = t ? (t.steps||[]).join('\n') : '';
+  $('#edDelete').style.display = t ? '' : 'none';
+  $('#editor').classList.add('open'); $('#edName').focus();
+}
+$('#addTimer').onclick = () => openEditor(null);
+$('#edCancel').onclick = () => $('#editor').classList.remove('open');
+$('#edSave').onclick = () => {
+  const name = $('#edName').value.trim() || 'Work time';
+  const min = Math.max(0, Math.min(180, parseFloat($('#edMin').value)||0));
+  const steps = $('#edSteps').value.split('\n').map(s=>s.trim()).filter(Boolean).slice(0,5);
+  const style = $('#edStyle').value;
+  if(editing){ Object.assign(S.timers.find(t=>t.id===editing), {name,min,steps,style}); }
+  else { editing = 't'+Date.now(); S.timers.push({id:editing,name,min,steps,style}); }
+  save(); $('#editor').classList.remove('open'); loadTimer(editing);
+};
+$('#edDelete').onclick = () => {
+  if(S.timers.length<=1) return toast('Keep at least one timer');
+  S.timers = S.timers.filter(t=>t.id!==editing);
+  if(S.activeTimer===editing) S.activeTimer = S.timers[0].id;
+  save(); $('#editor').classList.remove('open'); loadTimer(S.activeTimer);
+};
+
+/* ---------- music ---------- */
+let spotCtl = null, spotApi = null, spotReady = false;
+const audio = new Audio(); audio.preload='auto';
+let tracks = [], tIdx = 0, fadeT = 0;
+function parseSpotify(u){
+  u = (u||'').trim(); if(!u) return null;
+  let m = u.match(/^spotify:(playlist|album|track|artist|episode|show):([A-Za-z0-9]+)/); if(m) return `spotify:${m[1]}:${m[2]}`;
+  m = u.match(/open\.spotify\.com\/(?:intl-[a-z-]+\/)?(?:embed\/)?(playlist|album|track|artist|episode|show)\/([A-Za-z0-9]+)/);
+  return m ? `spotify:${m[1]}:${m[2]}` : null;
+}
+window.onSpotifyIframeApiReady = api => { spotApi = api; spotReady = true; mountSpotify(); };
+function loadSpotifyApi(){
+  if(document.getElementById('spotApi')) return;
+  const s = document.createElement('script'); s.id='spotApi'; s.src='https://open.spotify.com/embed/iframe-api/v1'; s.async=true;
+  s.onerror = () => { spotReady=false; mountSpotify(true); };
+  document.head.appendChild(s);
+}
+function mountSpotify(forcePlain){
+  const uri = parseSpotify(S.spotUrl) || 'spotify:playlist:37i9dQZF1DX4wta20PHgwo';
+  const wrap = $('#spotWrap');
+  if(spotCtl && !forcePlain){ spotCtl.loadUri(uri); return; }
+  wrap.innerHTML = '<div id="spotEmbed"></div>';
+  if(spotApi && !forcePlain){
+    spotApi.createController($('#spotEmbed'), {uri, width:'100%', height:80}, c => { spotCtl = c; });
+  } else {
+    const [,type,id] = uri.split(':');
+    wrap.innerHTML = `<iframe title="Spotify player" src="https://open.spotify.com/embed/${type}/${id}?utm_source=generator&theme=0" width="100%" height="80" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`;
+  }
+}
+function renderMusic(){
+  renderSeg('#srcSeg', SRCS, S.src, k=>{ S.src=k; save(); if(k!=='files') audio.pause(); renderMusic(); });
+  $('#srcSpotify').style.display = S.src==='spotify' ? '' : 'none';
+  $('#srcFiles').style.display = S.src==='files' ? '' : 'none';
+  $('#spotWrap').style.display = S.src==='spotify' ? '' : 'none';
+  $('#localPill').style.display = S.src==='files' ? 'flex' : 'none';
+  $('#hideMusic').style.display = S.src==='none' ? 'none' : '';
+  if(S.src==='spotify'){ loadSpotifyApi(); if(!spotCtl && (spotReady || !document.getElementById('spotApi'))) mountSpotify(); }
+}
+$('#spotUrl').value = S.spotUrl;
+$('#spotLoad').onclick = () => {
+  const v = $('#spotUrl').value; if(v && !parseSpotify(v)) return toast('That doesn’t look like a Spotify link');
+  S.spotUrl = v; save(); mountSpotify(); toast('Loaded — press play in the Spotify player');
+};
+$('#hideMusic').onclick = () => $('#music').classList.toggle('collapsed');
+
+function renderTracks(){
+  const ul = $('#trackList'); ul.innerHTML='';
+  tracks.forEach((t,i)=>{ const li=document.createElement('li'); li.className = i===tIdx?'now':''; li.innerHTML='<span></span>'; li.firstChild.textContent=t.name; li.onclick=()=>playTrack(i); ul.appendChild(li); });
+  const t = tracks[tIdx];
+  $('#trackName').textContent = t ? t.name : 'No song yet';
+  $('#trackMeta').textContent = tracks.length ? `Your music · ${tIdx+1} of ${tracks.length}` : 'Add songs in settings';
+}
+$('#audioFiles').onchange = e => {
+  const fs = [...e.target.files].filter(f=>/^audio\//.test(f.type) || /\.(mp3|m4a|wav|ogg|aac|flac)$/i.test(f.name));
+  fs.forEach(f=>tracks.push({name:f.name.replace(/\.[^.]+$/,''), url:URL.createObjectURL(f)}));
+  if(fs.length && audio.paused && !audio.src) { tIdx = 0; audio.src = tracks[0].url; }
+  renderTracks(); e.target.value='';
+};
+function playTrack(i){
+  if(!tracks.length) return;
+  tIdx = (i+tracks.length)%tracks.length; clearInterval(fadeT);
+  audio.src = tracks[tIdx].url; audio.volume = S.vol; audio.play().catch(()=>{}); renderTracks();
+}
+function nextTrack(){ if(S.shuffle && tracks.length>1){ let n; do{ n=Math.floor(Math.random()*tracks.length);}while(n===tIdx); playTrack(n);} else playTrack(tIdx+1); }
+audio.onended = nextTrack;
+audio.onplay = () => { document.body.classList.add('playing'); $('#lpIcon').setAttribute('d','M6 5h4v14H6zM14 5h4v14h-4z'); };
+audio.onpause = () => { document.body.classList.remove('playing'); $('#lpIcon').setAttribute('d','M7 5v14l12-7z'); };
+$('#lpPlay').onclick = () => { if(!tracks.length) return openDrawer(); if(audio.paused){ clearInterval(fadeT); audio.volume=S.vol; if(!audio.src) playTrack(0); else audio.play().catch(()=>{}); } else audio.pause(); };
+$('#lpNext').onclick = nextTrack;
+$('#lpPrev').onclick = () => playTrack(tIdx-1);
+$('#vol').value = S.vol; $('#vol').oninput = e => { S.vol = +e.target.value; audio.volume = S.vol; save(); };
+$('#optShuffle').checked = S.shuffle; $('#optShuffle').onchange = e => { S.shuffle = e.target.checked; save(); };
+function stopMusic(){
+  if(S.src==='files' && !audio.paused){
+    clearInterval(fadeT); const start = audio.volume, t0 = Date.now();
+    fadeT = setInterval(()=>{ const k = Math.min(1,(Date.now()-t0)/5000); audio.volume = start*(1-k); if(k>=1){ clearInterval(fadeT); audio.pause(); audio.volume=S.vol; } }, 60);
+  } else if(S.src==='spotify' && spotCtl){ try{ spotCtl.pause(); }catch(e){} }
+}
+
+/* ---------- settings UI ---------- */
+function renderSeg(sel, items, cur, on){
+  const box = $(sel); box.innerHTML='';
+  items.forEach(it=>{ const b=document.createElement('button'); b.textContent=it.n; b.setAttribute('aria-pressed', it.k===cur); b.onclick=()=>on(it.k); box.appendChild(b); });
+}
+function renderViewGrid(){
+  const g = $('#viewGrid'); g.innerHTML='';
+  VIEWS.forEach(v=>{
+    const b = document.createElement('button'); b.className='tile'; b.setAttribute('aria-pressed', S.view===v.key);
+    b.style.background = `linear-gradient(${v.fb[0]},${v.fb[1]} 60%,${v.fb[2]})`;
+    const im = new Image(); im.alt=''; im.referrerPolicy='no-referrer'; im.onerror=()=>im.remove(); im.src = PX(v.photos[0][0], 320);
+    const sp = document.createElement('span'); sp.textContent = v.name;
+    b.append(im, sp);
+    b.onclick = () => { S.view=v.key; S.photoIdx=0; save(); loadPhoto(); };
+    g.appendChild(b);
+  });
+  if(S.customUrl || customObjUrl){
+    const b = document.createElement('button'); b.className='tile'; b.setAttribute('aria-pressed', S.view==='custom');
+    const im = new Image(); im.alt=''; im.onerror=()=>im.remove(); im.src = customObjUrl || S.customUrl;
+    const sp = document.createElement('span'); sp.textContent='Your photo'; b.append(im, sp);
+    b.onclick = () => { S.view='custom'; save(); loadPhoto(); };
+    g.appendChild(b);
+  }
+}
+$('#shufflePhoto').onclick = () => { if(S.view==='custom') return; S.photoIdx = (S.photoIdx+1)%currentView().photos.length; save(); loadPhoto(); };
+$('#useUrl').onclick = () => { const u = $('#customUrl').value.trim(); if(!/^https?:\/\//.test(u)) return toast('Paste a link that starts with https://'); S.customUrl=u; customObjUrl=''; S.view='custom'; save(); loadPhoto(); };
+$('#customFile').onchange = e => { const f = e.target.files[0]; if(!f) return; customObjUrl = URL.createObjectURL(f); S.view='custom'; save(); loadPhoto(); toast('Using your photo (pick it again next time)'); };
+$('#customUrl').value = S.customUrl;
+$('#nextView').onclick = () => { const i = VIEWS.findIndex(v=>v.key===S.view); S.view = VIEWS[(i+1)%VIEWS.length].key; S.photoIdx=0; save(); loadPhoto(); };
+$('#todBtn').onclick = () => { const i = TODS.findIndex(x=>x.k===S.tod); S.tod = TODS[(i+1)%TODS.length].k; save(); applyLook(); toast('Time of day: '+(TODS.find(x=>x.k===S.tod).n)); };
+$('#wxBtn').onclick = () => { const i = WXS.findIndex(x=>x.k===S.wx); S.wx = WXS[(i+1)%WXS.length].k; save(); applyLook(); };
+
+function bindCheck(id, key, after){ const el=$(id); el.checked=!!S[key]; el.onchange=()=>{ S[key]=el.checked; save(); after&&after(); }; }
+bindCheck('#rainSound','rainSound',()=>{ audioCtx(); rainAudio(); });
+bindCheck('#optSteam','steam',()=>document.body.classList.toggle('steamOn',S.steam));
+bindCheck('#optDrift','drift',()=>document.body.classList.toggle('drift',S.drift));
+bindCheck('#optIdle','idle');
+bindCheck('#optCard','card',renderCard);
+bindCheck('#optBell','bell');
+bindCheck('#optStopMusic','stopMusic');
+document.body.classList.toggle('steamOn',S.steam); document.body.classList.toggle('drift',S.drift);
+$('#classLabel').value = S.classLabel;
+$('#classLabel').oninput = e => { S.classLabel = e.target.value; save(); renderCard(); };
+
+const drawer = $('#drawer');
+function openDrawer(){ drawer.classList.add('open'); }
+function closeDrawer(){ drawer.classList.remove('open'); }
+$('#setBtn').onclick = () => drawer.classList.contains('open') ? closeDrawer() : openDrawer();
+$('#closeDrawer').onclick = closeDrawer; $('#scrim').onclick = closeDrawer;
+$('#fsBtn').onclick = () => { if(document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(()=>{}); };
+
+/* toast, clock, idle */
+let toastT=0; function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2600); }
+function clock(){ $('#clock').textContent = new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}); }
+setInterval(clock, 10000); clock();
+let idleT = 0;
+function wake(){ document.body.classList.remove('idle'); clearTimeout(idleT); idleT = setTimeout(()=>{ if(S.idle && !drawer.classList.contains('open')) document.body.classList.add('idle'); }, 3500); }
+['mousemove','mousedown','keydown','touchstart'].forEach(e=>addEventListener(e, wake, {passive:true})); wake();
+
+addEventListener('keydown', e => {
+  if(e.target.closest('input,textarea,select,[contenteditable]')) return;
+  if(e.key===' '){ e.preventDefault(); audioCtx(); running?stopTimer():startTimer(); }
+  else if(e.key==='f'||e.key==='F') $('#fsBtn').click();
+  else if(e.key==='s'||e.key==='S') $('#setBtn').click();
+  else if(e.key==='Escape') closeDrawer();
+  else if(e.key==='ArrowRight') $('#nextView').click();
+  else if(e.key==='n'||e.key==='N'){ const i=S.timers.findIndex(t=>t.id===S.activeTimer); loadTimer(S.timers[(i+1)%S.timers.length].id); }
+});
+
+/* ---------- go ---------- */
+loadPhoto(); applyLook(); renderMusic(); renderTracks(); loadTimer(S.activeTimer);
+})();
+</script>
+</body>
+</html>
