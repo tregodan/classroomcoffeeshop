@@ -140,9 +140,9 @@ body.playing #localPill .disc{animation:spin 3.6s linear infinite}
 .iconBtn:hover{background:rgba(246,241,233,.1)}
 .iconBtn svg{width:20px;height:20px}
 
-#bar2{position:absolute;right:28px;bottom:28px;flex-wrap:wrap;justify-content:flex-end;max-width:calc(100vw - 480px);display:flex;align-items:center;gap:4px;padding:7px;border-radius:999px;transition:opacity .5s,transform .5s}
-#bar2 .sep{width:1px;height:26px;background:rgba(246,241,233,.2);margin:0 6px}
-.pill{height:44px;padding:0 16px;border-radius:999px;border:0;background:transparent;color:var(--ink);font-weight:600;font-size:15px;white-space:nowrap}
+#bar2{position:absolute;right:24px;bottom:28px;flex-wrap:wrap;justify-content:flex-end;max-width:calc(100vw - 470px);display:flex;align-items:center;gap:4px;padding:7px;border-radius:999px;transition:opacity .5s,transform .5s}
+#bar2 .sep{width:1px;height:26px;background:rgba(246,241,233,.2);margin:0 3px}
+.pill{height:44px;padding:0 12px;border-radius:999px;border:0;background:transparent;color:var(--ink);font-weight:600;font-size:14.5px;white-space:nowrap}
 .pill:hover{background:rgba(246,241,233,.1)}
 .pill.primary{background:var(--amber);color:var(--amber-ink)}
 .pill.primary:hover{background:#f6c77a}
@@ -441,6 +441,7 @@ body.control #closeDrawer,body.control #scrim,body.control .projOnly{display:non
     <button class="pill primary" id="startBtn">Start timer</button>
     <button class="pill" id="plusBtn" title="Add one minute">+1 min</button>
     <button class="pill" id="resetBtn">Reset</button>
+    <button class="pill" id="hideTimerBtn">Hide timer</button>
     <span class="sep"></span>
     <button class="pill" id="nextView" title="Next window view">View: <span id="viewName"></span></button>
     <button class="pill" id="todBtn" title="Time of day">Time: <span id="todName"></span></button>
@@ -765,6 +766,7 @@ const activeTimer = () => S.timers.find(t=>t.id===S.activeTimer) || S.timers[0];
 const fmt = s => { s=Math.max(0,Math.ceil(s)); const m=Math.floor(s/60), r=s%60; return (m<10?'0':'')+m+':'+(r<10?'0':'')+r; };
 function renderCard(){
   const t = activeTimer(), card = $('#card');
+  $('#hideTimerBtn').textContent = S.showTimer===false ? 'Show timer' : 'Hide timer';
   card.className = 'glass pos-' + (t.style||'right') + (S.card?'':' hidden') + ((t.min>0 && S.showTimer!==false)?'':' noTimer');
   $('#cardLabel').textContent = S.classLabel || 'Right now';
   $('#cardTitle').textContent = t.name;
@@ -830,6 +832,7 @@ function timeUp(){
 $('#startBtn').onclick = () => { audioCtx(); running ? stopTimer() : startTimer(); };
 $('#plusBtn').onclick = () => { if(running) endAt += 60000; else { remaining += 60; if(remaining>total) total = remaining; } updateTime(); };
 $('#resetBtn').onclick = () => loadTimer(S.activeTimer);
+$('#hideTimerBtn').onclick = () => { S.showTimer = S.showTimer===false; save(); renderCard(); refreshInputs(); };
 
 /* timer list + editor */
 let editing = null;
