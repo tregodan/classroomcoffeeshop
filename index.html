@@ -128,13 +128,21 @@ body.idleCrew #barista *,body.idleCrew #dj *{animation-play-state:paused}
 
 #music{position:absolute;left:28px;bottom:28px;display:flex;align-items:center;gap:10px}
 #spotWrap{width:380px;height:80px;border-radius:14px;overflow:hidden;background:rgba(0,0,0,.35)}
-#spotWrap iframe{border:0;display:block}
-#music.collapsed #spotWrap{position:absolute;left:-9999px}
+#spotWrap iframe,#embedWrap iframe{border:0;display:block}
+#embedWrap{display:none;width:380px;border-radius:14px;overflow:hidden;background:rgba(0,0,0,.35)}
+#embedWrap .empty{padding:14px 18px;font-size:14px;color:var(--muted)}
+#music.collapsed #spotWrap,#music.collapsed #embedWrap{position:absolute;left:-9999px}
+.stations{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+.stations button{min-height:54px;padding:6px 10px;border-radius:10px;border:1px solid rgba(246,241,233,.2);background:transparent;color:var(--ink);text-align:left;font-size:14px;font-weight:600;line-height:1.25}
+.stations button small{display:block;font-weight:400;font-size:12px;color:var(--muted)}
+.stations button[aria-pressed="true"]{background:var(--amber);color:var(--amber-ink);border-color:var(--amber)}
+.stations button[aria-pressed="true"] small{color:var(--amber-ink)}
 #localPill{display:none;align-items:center;gap:14px;padding:10px 20px 10px 10px;border-radius:999px}
 #localPill .disc{width:48px;height:48px;border-radius:50%;background:radial-gradient(circle,var(--amber) 0 16%,#0b0807 17% 100%);box-shadow:inset 0 0 0 9px #0b0807,inset 0 0 0 10px #2a2220}
 body.playing #localPill .disc{animation:spin 3.6s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-#localPill b{display:block;font-size:16px;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#localPill b,#localPill small{display:block;max-width:170px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#localPill b{font-size:16px}
 #localPill small{color:var(--muted);font-size:13px}
 .iconBtn{width:44px;height:44px;border-radius:50%;border:0;background:transparent;color:var(--ink);display:inline-flex;align-items:center;justify-content:center}
 .iconBtn:hover{background:rgba(246,241,233,.1)}
@@ -429,6 +437,7 @@ body.control #closeDrawer,body.control #scrim,body.control .projOnly{display:non
 
   <div id="music">
     <div id="spotWrap"><div id="spotEmbed"></div></div>
+    <div id="embedWrap"></div>
     <div id="localPill" class="glass"><span class="disc"></span><div><b id="trackName">No song yet</b><small id="trackMeta">Add songs in settings</small></div>
       <button class="iconBtn" id="lpPrev" aria-label="Previous song"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 5 9 12l10 7zM5 5v14"/></svg></button>
       <button class="iconBtn" id="lpPlay" aria-label="Play or pause music"><svg viewBox="0 0 24 24" fill="currentColor"><path id="lpIcon" d="M7 5v14l12-7z"/></svg></button>
@@ -538,12 +547,34 @@ body.control #closeDrawer,body.control #scrim,body.control .projOnly{display:non
     <div class="row"><button class="btn primary" id="spotLoad">Load</button></div>
     <p class="hint">Press play <em>inside</em> the Spotify player. Full songs play in Chrome on a computer when you're signed in to Spotify Premium in this browser; otherwise Spotify plays 30-second previews. When time is up, Spotify pauses (it can't fade).</p>
   </div>
+  <div id="srcRadio" style="display:none">
+    <div class="stations" id="stationGrid"></div>
+    <label class="field" style="margin-top:10px">Or paste your own radio stream link (optional)
+      <input id="radioUrl" placeholder="https://…/stream.mp3">
+    </label>
+    <div class="row"><button class="btn primary" id="radioLoad">Use this link</button></div>
+    <p class="hint">Free, ad-free, listener-supported radio that plays full songs all day, with no account. The stations come from <a href="https://somafm.com" target="_blank" rel="noopener">SomaFM</a> and <a href="https://radioparadise.com" target="_blank" rel="noopener">Radio Paradise</a> (they run on donations). Radio fades out gently when time is up. Songs are picked by the station, so preview a station before class.</p>
+  </div>
+  <div id="srcSC" style="display:none">
+    <label class="field" style="margin-top:10px">SoundCloud song or playlist link
+      <input id="scUrl" placeholder="https://soundcloud.com/…/sets/…">
+    </label>
+    <div class="row"><button class="btn primary" id="scLoad">Load</button></div>
+    <p class="hint">Free, no account needed, and most songs play in full. Copy the link from the song or playlist page on soundcloud.com (search “jazz cafe” or “lofi jazz”, open a playlist, copy the address bar). Press play <em>inside</em> the SoundCloud player once. A few songs marked “Go+” only play a short preview. SoundCloud fades out when time is up.</p>
+  </div>
+  <div id="srcIA" style="display:none">
+    <label class="field" style="margin-top:10px">Internet Archive album or collection link
+      <input id="iaUrl" placeholder="https://archive.org/details/…">
+    </label>
+    <div class="row"><button class="btn primary" id="iaLoad">Load</button></div>
+    <p class="hint">The <a href="https://archive.org/details/audio" target="_blank" rel="noopener">Internet Archive</a> is a free, ad-free library with lots of old jazz records (search “jazz 78” or “swing”). Open an item and copy its link. Press play inside the player once; it plays every song on the item. When time is up, it stops (it can't fade).</p>
+  </div>
   <div id="srcFiles" style="display:none">
     <div class="row"><label class="btn primary" style="display:inline-flex;align-items:center">Add MP3 / M4A files<input id="audioFiles" type="file" accept="audio/*" multiple class="sr"></label><label class="check" style="padding:0;gap:8px">Shuffle<input type="checkbox" id="optShuffle"></label></div>
     <ul id="trackList"></ul>
-    <label class="field" style="margin-top:10px">Volume<input id="vol" type="range" min="0" max="1" step="0.01" value="0.7" style="height:30px;padding:0"></label>
     <p class="hint">Your songs stay on this computer and fade out gently when time is up. You'll need to add them again after closing the page.</p>
   </div>
+  <label class="field" id="volRow" style="margin-top:10px">Volume<input id="vol" type="range" min="0" max="1" step="0.01" value="0.7" style="height:30px;padding:0"></label>
 
   <h3>Shortcuts</h3>
   <p class="hint"><kbd>Space</kbd> start / pause timer · <kbd>F</kbd> full screen · <kbd>S</kbd> settings · <kbd>→</kbd> next view · <kbd>N</kbd> next task</p>
@@ -569,7 +600,17 @@ const VIEWS = [
 ];
 const TODS = [{k:'morning',n:'Morning'},{k:'noon',n:'Noon'},{k:'night',n:'Night'},{k:'auto',n:'Follow the clock'}];
 const WXS = [{k:'clear',n:'Clear'},{k:'sun',n:'Sun'},{k:'rain',n:'Rain'},{k:'snow',n:'Snow'},{k:'fog',n:'Fog'}];
-const SRCS = [{k:'spotify',n:'Spotify'},{k:'files',n:'My files'},{k:'none',n:'No music'}];
+const SRCS = [{k:'radio',n:'Café radio'},{k:'soundcloud',n:'SoundCloud'},{k:'archive',n:'Internet Archive'},{k:'spotify',n:'Spotify'},{k:'files',n:'My files'},{k:'none',n:'No music'}];
+/* Free, ad-free, listener-supported streams (full songs, no account). */
+const STATIONS = [
+  {k:'sonicuniverse', n:'Jazz café', d:'Modern jazz · SomaFM Sonic Universe', url:'https://ice1.somafm.com/sonicuniverse-128-mp3', alt:'https://ice2.somafm.com/sonicuniverse-128-mp3'},
+  {k:'bossa', n:'Bossa nova', d:'Brazilian jazz · SomaFM Bossa Beyond', url:'https://ice1.somafm.com/bossa-128-mp3', alt:'https://ice2.somafm.com/bossa-128-mp3'},
+  {k:'illstreet', n:'Retro lounge', d:'Vintage lounge · SomaFM Illinois St.', url:'https://ice1.somafm.com/illstreet-128-mp3', alt:'https://ice2.somafm.com/illstreet-128-mp3'},
+  {k:'secretagent', n:'Cool & smooth', d:'Spy-jazz lounge · SomaFM Secret Agent', url:'https://ice1.somafm.com/secretagent-128-mp3', alt:'https://ice2.somafm.com/secretagent-128-mp3'},
+  {k:'groovesalad', n:'Chill beats', d:'Downtempo · SomaFM Groove Salad', url:'https://ice1.somafm.com/groovesalad-128-mp3', alt:'https://ice2.somafm.com/groovesalad-128-mp3'},
+  {k:'fluid', n:'Lo-fi hip-hop', d:'Instrumental beats · SomaFM Fluid', url:'https://ice1.somafm.com/fluid-128-mp3', alt:'https://ice2.somafm.com/fluid-128-mp3'},
+  {k:'rpmellow', n:'Mellow mix', d:'Mellow songs (some vocals) · Radio Paradise', url:'https://stream.radioparadise.com/mellow-128', alt:''},
+];
 const DEFAULT_TIMERS = [
   {id:'t1',name:'Welcome in',min:2,style:'center',steps:['Phones in the caddy','Journals out']},
   {id:'t2',name:'Do now',min:5,style:'left',steps:['Grab your notebook','Answer the question on the board']},
@@ -587,7 +628,7 @@ const saved = store.get();
 const S = Object.assign({
   view:'urban', photoIdx:0, customUrl:'', tod:'auto', wx:'rain', rainSound:false,
   steam:true, drift:true, barista:true, dj:true, idle:true, card:true, bell:true, stopMusic:true,
-  classLabel:'', signTitle:'', signGoal:'', signDesc:'', timers:DEFAULT_TIMERS, activeTimer:'t3', src:'spotify', spotUrl:'', shuffle:false, vol:0.7
+  classLabel:'', signTitle:'', signGoal:'', signDesc:'', timers:DEFAULT_TIMERS, activeTimer:'t3', src:'radio', spotUrl:'', scUrl:'', iaUrl:'', station:'sonicuniverse', radioUrl:'', shuffle:false, vol:0.7
 }, saved);
 if(!Array.isArray(S.timers) || !S.timers.length) S.timers = DEFAULT_TIMERS.slice();
 const CONTROL = new URLSearchParams(location.search).has('control');
@@ -909,15 +950,76 @@ function mountSpotify(forcePlain){
     wrap.innerHTML = `<iframe title="Spotify player" src="https://open.spotify.com/embed/${type}/${id}?utm_source=generator&theme=0" width="100%" height="80" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`;
   }
 }
+let embedKind = '';
+function leaveSource(){ audio.pause(); clearInterval(fadeT); if(embedKind){ $('#embedWrap').innerHTML=''; embedKind=''; scWidget=null; } try{ spotCtl && spotCtl.pause(); }catch(e){} }
 function renderMusic(){
-  renderSeg('#srcSeg', SRCS, S.src, k=>{ S.src=k; save(); if(k!=='files') audio.pause(); renderMusic(); });
-  $('#srcSpotify').style.display = S.src==='spotify' ? '' : 'none';
-  $('#srcFiles').style.display = S.src==='files' ? '' : 'none';
-  $('#spotWrap').style.display = S.src==='spotify' ? '' : 'none';
-  $('#localPill').style.display = S.src==='files' ? 'flex' : 'none';
-  $('#hideMusic').style.display = S.src==='none' ? 'none' : '';
-  if(S.src==='spotify' && !CONTROL){ loadSpotifyApi(); if(!spotCtl && (spotReady || !document.getElementById('spotApi'))) mountSpotify(); }
+  renderSeg('#srcSeg', SRCS, S.src, k=>{ if(k===S.src) return; S.src=k; save(); if(!CONTROL) leaveSource(); renderMusic(); });
+  const show = (sel,on,d='') => $(sel).style.display = on ? d : 'none';
+  show('#srcSpotify', S.src==='spotify'); show('#srcFiles', S.src==='files'); show('#srcRadio', S.src==='radio');
+  show('#srcSC', S.src==='soundcloud'); show('#srcIA', S.src==='archive');
+  show('#volRow', ['files','radio','soundcloud'].includes(S.src), 'flex');
+  show('#spotWrap', S.src==='spotify');
+  show('#embedWrap', S.src==='soundcloud' || S.src==='archive', 'block');
+  show('#localPill', S.src==='files' || S.src==='radio', 'flex');
+  show('#hideMusic', S.src!=='none');
+  $('#lpPrev').setAttribute('aria-label', S.src==='radio' ? 'Previous station' : 'Previous song');
+  $('#lpNext').setAttribute('aria-label', S.src==='radio' ? 'Next station' : 'Next song');
+  renderStations(); renderTracks();
+  if(CONTROL) return;
+  if(S.src==='spotify'){ loadSpotifyApi(); if(!spotCtl && (spotReady || !document.getElementById('spotApi'))) mountSpotify(); }
+  if(S.src==='soundcloud' && embedKind!=='soundcloud') mountSC();
+  if(S.src==='archive' && embedKind!=='archive') mountIA();
 }
+
+/* radio (uses the same <audio> element as My files, so it fades at time-up) */
+function curStation(){ return S.radioUrl && S.station==='custom' ? {k:'custom', n:'Your radio link', d:S.radioUrl, url:S.radioUrl, alt:''} : (STATIONS.find(x=>x.k===S.station) || STATIONS[0]); }
+function renderStations(){
+  const g = $('#stationGrid'); g.innerHTML='';
+  STATIONS.forEach(st=>{ const b=document.createElement('button'); b.setAttribute('aria-pressed', st.k===S.station);
+    b.innerHTML='<span></span><small></small>'; b.firstChild.textContent=st.n; b.lastChild.textContent=st.d;
+    b.onclick=()=>{ S.station=st.k; save(); renderStations(); if(CONTROL) send({type:'cmd',cmd:'radio'}); else playRadio(); }; g.appendChild(b); });
+}
+let radioTried = false;
+function playRadio(){
+  const st = curStation(); clearInterval(fadeT); radioTried = false;
+  audio.src = st.url; audio.volume = S.vol; audio.play().catch(()=>{}); renderTracks();
+}
+function stepStation(d){
+  const i = STATIONS.findIndex(x=>x.k===S.station); S.station = STATIONS[(Math.max(i,0)+d+STATIONS.length)%STATIONS.length].k; save(); renderStations(); playRadio();
+}
+audio.addEventListener('error', () => { if(S.src!=='radio') return; const st = curStation();
+  if(st.alt && !radioTried){ radioTried = true; audio.src = st.alt; audio.play().catch(()=>{}); }
+  else toast('That station isn’t answering right now — try another one'); });
+$('#radioLoad').onclick = () => { const v = $('#radioUrl').value.trim(); if(!/^https:\/\//i.test(v)) return toast('Paste a link that starts with https://');
+  S.radioUrl = v; S.station = 'custom'; save(); renderStations(); if(CONTROL) send({type:'cmd',cmd:'radio'}); else playRadio(); };
+
+/* SoundCloud widget */
+let scWidget = null;
+function scLink(u){ u=(u||'').trim(); return /^https:\/\/(www\.|m\.|on\.)?soundcloud\.com\/\S+/i.test(u) ? u.replace('//m.','//') : null; }
+function mountSC(){
+  const wrap = $('#embedWrap'), u = scLink(S.scUrl); embedKind = 'soundcloud'; scWidget = null;
+  if(!u){ wrap.innerHTML = '<div class="empty">Paste a SoundCloud link in Settings → Music</div>'; return; }
+  const src = 'https://w.soundcloud.com/player/?url='+encodeURIComponent(u)+'&color=%23f2b85e&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=false';
+  wrap.innerHTML = `<iframe id="scFrame" title="SoundCloud player" width="100%" height="120" allow="autoplay" src="${src}"></iframe>`;
+  const hook = () => { try{ scWidget = SC.Widget($('#scFrame')); scWidget.bind(SC.Widget.Events.READY, ()=>scWidget.setVolume(Math.round(S.vol*100))); }catch(e){} };
+  if(window.SC && SC.Widget) hook();
+  else if(!document.getElementById('scApi')){ const s=document.createElement('script'); s.id='scApi'; s.src='https://w.soundcloud.com/player/api.js'; s.onload=hook; document.head.appendChild(s); }
+  else document.getElementById('scApi').addEventListener('load', hook);
+}
+$('#scUrl').value = S.scUrl;
+$('#scLoad').onclick = () => { const v = $('#scUrl').value; if(!scLink(v)) return toast('That doesn’t look like a SoundCloud link');
+  S.scUrl = v.trim(); save(); if(!CONTROL) mountSC(); toast('Loaded — press play in the SoundCloud player'); };
+
+/* Internet Archive embed */
+function iaId(u){ u=(u||'').trim(); const m = u.match(/archive\.org\/(?:details|embed)\/([^\/?#\s]+)/i); return m ? m[1] : (/^[A-Za-z0-9._-]+$/.test(u) ? u : null); }
+function mountIA(){
+  const wrap = $('#embedWrap'), id = iaId(S.iaUrl); embedKind = 'archive';
+  if(!id){ wrap.innerHTML = '<div class="empty">Paste an Internet Archive link in Settings → Music</div>'; return; }
+  wrap.innerHTML = `<iframe title="Internet Archive player" src="https://archive.org/embed/${encodeURIComponent(id)}?playlist=1&list_height=60" width="100%" height="120" allow="autoplay; fullscreen" loading="lazy"></iframe>`;
+}
+$('#iaUrl').value = S.iaUrl;
+$('#iaLoad').onclick = () => { const v = $('#iaUrl').value; if(!iaId(v)) return toast('That doesn’t look like an archive.org link');
+  S.iaUrl = v.trim(); save(); if(!CONTROL) mountIA(); toast('Loaded — press play in the player'); };
 $('#spotUrl').value = S.spotUrl;
 $('#spotLoad').onclick = () => {
   const v = $('#spotUrl').value; if(v && !parseSpotify(v)) return toast('That doesn’t look like a Spotify link');
@@ -928,6 +1030,7 @@ $('#hideMusic').onclick = () => $('#music').classList.toggle('collapsed');
 function renderTracks(){
   const ul = $('#trackList'); ul.innerHTML='';
   tracks.forEach((t,i)=>{ const li=document.createElement('li'); li.className = i===tIdx?'now':''; li.innerHTML='<span></span>'; li.firstChild.textContent=t.name; li.onclick=()=> CONTROL ? send({type:'cmd',cmd:'mtrack',arg:i}) : playTrack(i); ul.appendChild(li); });
+  if(S.src==='radio'){ const st = curStation(); $('#trackName').textContent = st.n; $('#trackMeta').textContent = st.k==='custom' ? 'Café radio · your link' : st.d.split(' · ').pop(); $('#trackMeta').title = st.d; return; }
   const t = tracks[tIdx];
   $('#trackName').textContent = t ? t.name : 'No song yet';
   $('#trackMeta').textContent = tracks.length ? `Your music · ${tIdx+1} of ${tracks.length}` : 'Add songs in settings';
@@ -948,16 +1051,24 @@ function playTrack(i){
   audio.src = tracks[tIdx].url; audio.volume = S.vol; audio.play().catch(()=>{}); renderTracks();
 }
 function nextTrack(){ if(S.shuffle && tracks.length>1){ let n; do{ n=Math.floor(Math.random()*tracks.length);}while(n===tIdx); playTrack(n);} else playTrack(tIdx+1); }
-audio.onended = nextTrack;
+audio.onended = () => { if(S.src==='files') nextTrack(); };
 audio.onplay = () => { document.body.classList.add('playing'); $('#lpIcon').setAttribute('d','M6 5h4v14H6zM14 5h4v14h-4z'); };
 audio.onpause = () => { document.body.classList.remove('playing'); $('#lpIcon').setAttribute('d','M7 5v14l12-7z'); };
-$('#lpPlay').onclick = () => { if(!tracks.length) return openDrawer(); if(audio.paused){ clearInterval(fadeT); audio.volume=S.vol; if(!audio.src) playTrack(0); else audio.play().catch(()=>{}); } else audio.pause(); };
-$('#lpNext').onclick = nextTrack;
-$('#lpPrev').onclick = () => playTrack(tIdx-1);
-$('#vol').value = S.vol; $('#vol').oninput = e => { S.vol = +e.target.value; audio.volume = S.vol; save(); };
+$('#lpPlay').onclick = () => {
+  if(S.src==='radio'){ if(audio.paused) playRadio(); else audio.pause(); return; }
+  if(!tracks.length) return openDrawer(); if(audio.paused){ clearInterval(fadeT); audio.volume=S.vol; if(!audio.src) playTrack(0); else audio.play().catch(()=>{}); } else audio.pause(); };
+$('#lpNext').onclick = () => S.src==='radio' ? stepStation(1) : nextTrack();
+$('#lpPrev').onclick = () => S.src==='radio' ? stepStation(-1) : playTrack(tIdx-1);
+$('#vol').value = S.vol; $('#vol').oninput = e => { S.vol = +e.target.value; audio.volume = S.vol; try{ scWidget && scWidget.setVolume(Math.round(S.vol*100)); }catch(_){} save(); };
 $('#optShuffle').checked = S.shuffle; $('#optShuffle').onchange = e => { S.shuffle = e.target.checked; save(); };
 function stopMusic(){
-  if(S.src==='files' && !audio.paused){
+  if(S.src==='soundcloud' && scWidget){
+    clearInterval(fadeT); const t0 = Date.now(), v0 = S.vol*100;
+    fadeT = setInterval(()=>{ const k = Math.min(1,(Date.now()-t0)/5000); try{ scWidget.setVolume(Math.round(v0*(1-k))); if(k>=1){ clearInterval(fadeT); fadeT=0; scWidget.pause(); scWidget.setVolume(Math.round(v0)); } }catch(e){ clearInterval(fadeT); fadeT=0; } }, 100);
+    return;
+  }
+  if(S.src==='archive' && embedKind==='archive'){ mountIA(); return; }
+  if((S.src==='files' || S.src==='radio') && !audio.paused){
     clearInterval(fadeT); const start = audio.volume, t0 = Date.now();
     fadeT = setInterval(()=>{ const k = Math.min(1,(Date.now()-t0)/5000); audio.volume = start*(1-k); if(k>=1){ clearInterval(fadeT); audio.pause(); audio.volume=S.vol; } }, 60);
   } else if(S.src==='spotify' && spotCtl){ try{ spotCtl.pause(); }catch(e){} }
@@ -1050,6 +1161,7 @@ $('#gateBtn').onclick = () => { $('#gate').classList.add('gone'); audioCtx(); do
 function refreshInputs(){
   if(document.activeElement !== $('#classLabel')) $('#classLabel').value = S.classLabel;
   if(document.activeElement !== $('#spotUrl')) $('#spotUrl').value = S.spotUrl;
+  [['#scUrl','scUrl'],['#iaUrl','iaUrl'],['#radioUrl','radioUrl']].forEach(([id,k])=>{ if(document.activeElement !== $(id)) $(id).value = S[k]||''; });
   if(document.activeElement !== $('#signTitle')) $('#signTitle').value = S.signTitle||'';
   if(document.activeElement !== $('#signGoal')) $('#signGoal').value = S.signGoal||'';
   if(document.activeElement !== $('#signDesc')) $('#signDesc').value = S.signDesc||'';
@@ -1066,8 +1178,12 @@ function applyRemoteState(n){
   applyLook();
   if(prev.activeTimer !== S.activeTimer) loadTimer(S.activeTimer);
   else { const t = activeTimer(), nt = Math.round((+t.min||0)*60); if(!running && nt!==total){ total = remaining = nt; } renderCard(); renderTimerList(); }
-  if(prev.src !== S.src){ if(S.src!=='files') audio.pause(); renderMusic(); }
+  if(prev.src !== S.src){ leaveSource(); renderMusic(); }
   else if(prev.spotUrl !== S.spotUrl && S.src==='spotify') mountSpotify();
+  else if(prev.scUrl !== S.scUrl && S.src==='soundcloud') mountSC();
+  else if(prev.iaUrl !== S.iaUrl && S.src==='archive') mountIA();
+  else if(prev.station !== S.station && S.src==='radio') renderStations();
+  if(prev.vol !== S.vol){ try{ scWidget && scWidget.setVolume(Math.round(S.vol*100)); }catch(e){} }
   if(!fadeT) audio.volume = S.vol;
   refreshInputs();
 }
@@ -1076,7 +1192,9 @@ const CMDS = {
   plus(){ $('#plusBtn').click(); },
   reset(){ loadTimer(S.activeTimer); },
   next(){ nextTimer(); },
-  mplay(){ if(tracks.length) $('#lpPlay').click(); },
+  mplay(){ if(tracks.length || S.src==='radio') $('#lpPlay').click(); },
+  radio(){ if(S.src==='radio') playRadio(); },
+  sc(){ try{ scWidget && scWidget.toggle(); }catch(e){} },
   mtrack(i){ playTrack(i); },
   spot(){ try{ spotCtl && spotCtl.togglePlay(); }catch(e){} }
 };
@@ -1084,7 +1202,7 @@ function status(){
   if(CONTROL) return;
   const t = activeTimer();
   send({type:'status', title:t.name, label:S.classLabel, remaining: running ? (endAt-Date.now())/1000 : remaining, total, running,
-        tracks: tracks.map(x=>x.name), tIdx, playing: !audio.paused, src:S.src, card:S.card});
+        tracks: tracks.map(x=>x.name), tIdx, playing: !audio.paused, src:S.src, card:S.card, station: S.src==='radio' ? curStation().n : ''});
 }
 if(bc) bc.onmessage = e => {
   const m = e.data || {};
@@ -1108,7 +1226,11 @@ function showStatus(m){
   $('#rStart').textContent = m.running ? 'Pause' : (m.remaining>0 && m.remaining<m.total ? 'Resume' : 'Start');
   $('#rCard').textContent = m.card ? 'Hide board' : 'Show board';
   const at = activeTimer(); $('#rTimer').textContent = (at.hideTimer ? 'Show' : 'Hide') + ' this task’s timer'; $('#rTimer').disabled = !(at.min>0);
-  $('#rMusicNote').textContent = m.src==='spotify' ? 'Spotify: press play once on the café screen itself; after that this button can pause and resume.' : m.src==='files' ? (m.tracks.length ? (m.playing?'Playing: ':'Paused: ')+(m.tracks[m.tIdx]||'') : 'Add songs under Music below.') : '';
+  $('#rMusicNote').textContent = m.src==='spotify' ? 'Spotify: press play once on the café screen itself; after that this button can pause and resume.'
+    : m.src==='soundcloud' ? 'SoundCloud: press play once on the café screen itself; after that this button can pause and resume.'
+    : m.src==='archive' ? 'Internet Archive: press play and pause on the café screen itself.'
+    : m.src==='radio' ? (m.playing ? 'Playing: ' : 'Paused: ') + (m.station||'')
+    : m.src==='files' ? (m.tracks.length ? (m.playing?'Playing: ':'Paused: ')+(m.tracks[m.tIdx]||'') : 'Add songs under Music below.') : '';
   const key = m.tracks.join('|')+'#'+m.tIdx;
   if(key !== lastTrackKey){ lastTrackKey = key; tracks = m.tracks.map(n=>({name:n})); tIdx = m.tIdx; renderTracks(); }
 }
@@ -1122,7 +1244,7 @@ if(CONTROL){
   $('#rNext').onclick = () => send({type:'cmd',cmd:'next'});
   $('#rCard').onclick = () => { S.card = !S.card; save(); refreshInputs(); };
   $('#rTimer').onclick = () => { const t = activeTimer(); t.hideTimer = !t.hideTimer; save(); renderTimerList(); };
-  $('#rMusic').onclick = () => send({type:'cmd',cmd: S.src==='spotify' ? 'spot' : 'mplay'});
+  $('#rMusic').onclick = () => send({type:'cmd',cmd: S.src==='spotify' ? 'spot' : S.src==='soundcloud' ? 'sc' : 'mplay'});
   $('#rOpen').onclick = () => window.open(location.pathname, 'cafeScreen');
   if(!bc) $('#rConn').textContent = 'This browser can’t link windows. Use Chrome.';
   setInterval(()=>{ const ok = Date.now()-lastStatus < 2500; const c=$('#rConn'); c.classList.toggle('ok',ok);

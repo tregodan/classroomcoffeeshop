@@ -12,7 +12,12 @@ An ad-free "jazz café" scene for the classroom projector, built to replace YouT
 - **Tasks:** your own list (Welcome in, Do now, Work time…). Each has steps, minutes, an optional timer (Show timer on/off), and a board style. At zero, the board pulses, a soft bell rings, and the music stops.
 - **Café sign:** the letter board on the wall. It shows a title (or your class name, or "Corner Café"), **Today**, the goal of the day, and a line of context.
 - **Barista and DJ:** optional animated staff. She pulls espresso into a glass, and he mixes on turntables.
-- **Music:** a Spotify playlist embed, or your own MP3/M4A files (these fade out at time-up).
+- **Music (all free, no ads, full songs):**
+  - **Café radio** — one click: Jazz café, Bossa nova, Retro lounge, Cool & smooth, Chill beats, Lo-fi hip-hop, Mellow mix (listener-supported stations from SomaFM and Radio Paradise), or paste any radio stream link. No account. Fades out at time-up.
+  - **SoundCloud** — paste a song or playlist link. No account; most songs play in full. Fades out at time-up.
+  - **Internet Archive** — paste an album or collection link (great for old jazz records). Stops at time-up.
+  - **Spotify** — playlist embed (full songs need Premium; otherwise 30-second previews).
+  - **My files** — your own MP3/M4A files (fade out at time-up).
 - **Teacher controls:** a second window that controls the projector live.
 - Settings save in the browser (localStorage).
 
