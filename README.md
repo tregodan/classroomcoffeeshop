@@ -13,7 +13,7 @@ An ad-free "jazz café" scene for the classroom projector, built to replace YouT
 - **Café sign:** the letter board on the wall. It shows a title (or your class name, or "Corner Café"), **Today**, the goal of the day, and a line of context.
 - **Barista and DJ:** optional animated staff. She pulls espresso into a glass, and he mixes on turntables.
 - **Music (all free, no ads, full songs):**
-  - **Café radio** — one click: Jazz café, Bossa nova, Retro lounge, Cool & smooth, Chill beats, Lo-fi hip-hop, Mellow mix (listener-supported stations from SomaFM and Radio Paradise), or paste any radio stream link. No account. Fades out at time-up.
+  - **Café radio** — one click: Jazz café, Lo-fi beats, Mellow mix, World café, Calm classical (ad-free stations from Radio Swiss Jazz and Classic, freeCodeCamp Code Radio, and Radio Paradise), or paste any radio stream link. No account. Fades out at time-up.
   - **SoundCloud** — paste a song or playlist link. No account; most songs play in full. Fades out at time-up.
   - **Internet Archive** — paste an album or collection link (great for old jazz records). Stops at time-up.
   - **Spotify** — playlist embed (full songs need Premium; otherwise 30-second previews).

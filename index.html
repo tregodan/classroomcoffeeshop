@@ -553,7 +553,7 @@ body.control #closeDrawer,body.control #scrim,body.control .projOnly{display:non
       <input id="radioUrl" placeholder="https://…/stream.mp3">
     </label>
     <div class="row"><button class="btn primary" id="radioLoad">Use this link</button></div>
-    <p class="hint">Free, ad-free, listener-supported radio that plays full songs all day, with no account. The stations come from <a href="https://somafm.com" target="_blank" rel="noopener">SomaFM</a> and <a href="https://radioparadise.com" target="_blank" rel="noopener">Radio Paradise</a> (they run on donations). Radio fades out gently when time is up. Songs are picked by the station, so preview a station before class.</p>
+    <p class="hint">Free, ad-free, listener-supported radio that plays full songs all day, with no account. The stations are <a href="https://www.radioswissjazz.ch" target="_blank" rel="noopener">Radio Swiss Jazz</a> and Radio Swiss Classic (public radio with no ads), <a href="https://coderadio.freecodecamp.org" target="_blank" rel="noopener">freeCodeCamp Code Radio</a>, and <a href="https://radioparadise.com" target="_blank" rel="noopener">Radio Paradise</a> (listener-supported). The Swiss stations sometimes have a short announcement in German. Radio fades out gently when time is up. Songs are picked by the station, so preview a station before class.</p>
   </div>
   <div id="srcSC" style="display:none">
     <label class="field" style="margin-top:10px">SoundCloud song or playlist link
@@ -603,13 +603,11 @@ const WXS = [{k:'clear',n:'Clear'},{k:'sun',n:'Sun'},{k:'rain',n:'Rain'},{k:'sno
 const SRCS = [{k:'radio',n:'Café radio'},{k:'soundcloud',n:'SoundCloud'},{k:'archive',n:'Internet Archive'},{k:'spotify',n:'Spotify'},{k:'files',n:'My files'},{k:'none',n:'No music'}];
 /* Free, ad-free, listener-supported streams (full songs, no account). */
 const STATIONS = [
-  {k:'sonicuniverse', n:'Jazz café', d:'Modern jazz · SomaFM Sonic Universe', url:'https://ice1.somafm.com/sonicuniverse-128-mp3', alt:'https://ice2.somafm.com/sonicuniverse-128-mp3'},
-  {k:'bossa', n:'Bossa nova', d:'Brazilian jazz · SomaFM Bossa Beyond', url:'https://ice1.somafm.com/bossa-128-mp3', alt:'https://ice2.somafm.com/bossa-128-mp3'},
-  {k:'illstreet', n:'Retro lounge', d:'Vintage lounge · SomaFM Illinois St.', url:'https://ice1.somafm.com/illstreet-128-mp3', alt:'https://ice2.somafm.com/illstreet-128-mp3'},
-  {k:'secretagent', n:'Cool & smooth', d:'Spy-jazz lounge · SomaFM Secret Agent', url:'https://ice1.somafm.com/secretagent-128-mp3', alt:'https://ice2.somafm.com/secretagent-128-mp3'},
-  {k:'groovesalad', n:'Chill beats', d:'Downtempo · SomaFM Groove Salad', url:'https://ice1.somafm.com/groovesalad-128-mp3', alt:'https://ice2.somafm.com/groovesalad-128-mp3'},
-  {k:'fluid', n:'Lo-fi hip-hop', d:'Instrumental beats · SomaFM Fluid', url:'https://ice1.somafm.com/fluid-128-mp3', alt:'https://ice2.somafm.com/fluid-128-mp3'},
-  {k:'rpmellow', n:'Mellow mix', d:'Mellow songs (some vocals) · Radio Paradise', url:'https://stream.radioparadise.com/mellow-128', alt:''},
+  {k:'swissjazz', n:'Jazz café', d:'Jazz all day · Radio Swiss Jazz', url:'https://stream.srg-ssr.ch/m/rsj/mp3_128', alt:'https://stream.srg-ssr.ch/m/rsj/aacp_96'},
+  {k:'coderadio', n:'Lo-fi beats', d:'Chill study beats · freeCodeCamp Code Radio', url:'https://coderadio-admin-v2.freecodecamp.org/listen/coderadio/radio.mp3', alt:''},
+  {k:'rpmellow', n:'Mellow mix', d:'Soft songs, some vocals · Radio Paradise', url:'https://stream.radioparadise.com/mellow-128', alt:'https://stream.radioparadise.com/mellow-192'},
+  {k:'rpworld', n:'World café', d:'Global & acoustic · Radio Paradise', url:'https://stream.radioparadise.com/world-etc-128', alt:'https://stream.radioparadise.com/world-etc-192'},
+  {k:'swissclassic', n:'Calm classical', d:'Classical · Radio Swiss Classic', url:'https://stream.srg-ssr.ch/m/rsc_de/mp3_128', alt:'https://stream.srg-ssr.ch/m/rsc_de/aacp_96'},
 ];
 const DEFAULT_TIMERS = [
   {id:'t1',name:'Welcome in',min:2,style:'center',steps:['Phones in the caddy','Journals out']},
@@ -628,9 +626,10 @@ const saved = store.get();
 const S = Object.assign({
   view:'urban', photoIdx:0, customUrl:'', tod:'auto', wx:'rain', rainSound:false,
   steam:true, drift:true, barista:true, dj:true, idle:true, card:true, bell:true, stopMusic:true,
-  classLabel:'', signTitle:'', signGoal:'', signDesc:'', timers:DEFAULT_TIMERS, activeTimer:'t3', src:'radio', spotUrl:'', scUrl:'', iaUrl:'', station:'sonicuniverse', radioUrl:'', shuffle:false, vol:0.7
+  classLabel:'', signTitle:'', signGoal:'', signDesc:'', timers:DEFAULT_TIMERS, activeTimer:'t3', src:'radio', spotUrl:'', scUrl:'', iaUrl:'', station:'swissjazz', radioUrl:'', shuffle:false, vol:0.7
 }, saved);
 if(!Array.isArray(S.timers) || !S.timers.length) S.timers = DEFAULT_TIMERS.slice();
+if(S.station!=='custom' && !STATIONS.some(x=>x.k===S.station)) S.station = STATIONS[0].k;
 const CONTROL = new URLSearchParams(location.search).has('control');
 if(CONTROL) document.body.classList.add('control');
 const bc = ('BroadcastChannel' in window) ? new BroadcastChannel('cornerCafe') : null;
